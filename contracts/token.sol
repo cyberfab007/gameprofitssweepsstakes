@@ -1,22 +1,6 @@
- 
 pragma solidity >=0.4.22 <0.6.0;
 
-contract owned {
-    address public owner;
-
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
+import "./Owned.sol";
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
 
@@ -179,7 +163,7 @@ contract TokenERC20 {
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
-contract MyAdvancedToken is owned, TokenERC20 {
+contract MyAdvancedToken is Owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
