@@ -25,7 +25,6 @@ contract Raffle is Owned {
           uint32           _execDelay,
           string    memory _sponsoredBy)
       public {
-
         setName(_name);
         setPrizeTokens(_prizeTokens);
         setDepositLimit(_depositLimit);
@@ -45,7 +44,7 @@ contract Raffle is Owned {
     function deposit(address _prizeToken, uint256[] memory _ticketNumbers) public {
         
         // check the token a player is going to use is one of prize tokens
-        require(prizeTokensInstances[_prizeToken] != MyAdvancedToken(0));
+        require(prizeTokensInstances[_prizeToken] != MyAdvancedToken(0x0));
 
         MyAdvancedToken prizeTokenContract = MyAdvancedToken(_prizeToken);
 
@@ -70,18 +69,14 @@ contract Raffle is Owned {
         name = _name;
     }
     function setPrizeTokens(address[] memory _prizeTokens) onlyOwner public {
-        unsetPrizeTokensInstances();
+        updatePrizeTokensInstances(true);
         prizeTokens = _prizeTokens;
-        setPrizeTokensInstances();
+        updatePrizeTokensInstances(false);
     }
-    function unsetPrizeTokensInstances() private {
-        for (uint256 i=0; i<prizeTokens.length; i++) {
-            prizeTokensInstances[prizeTokens[i]] = MyAdvancedToken(0);
-        }
-    }
-    function setPrizeTokensInstances() private {
-        for (uint256 i=0; i<prizeTokens.length; i++) {
-            prizeTokensInstances[prizeTokens[i]] = MyAdvancedToken(prizeTokens[i]);
+    function updatePrizeTokensInstances(bool reset) private {
+        for (uint256 i = 0; i < prizeTokens.length; i++) {
+            prizeTokensInstances[prizeTokens[i]] = 
+              MyAdvancedToken(reset ? address(0x0) : prizeTokens[i]);
         }
     }
     function setDepositLimit(uint256 _depositLimit) onlyOwner public {
