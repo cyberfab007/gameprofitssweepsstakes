@@ -4,64 +4,64 @@ import "./Owned.sol";
 
 contract Raffle is Owned {
 
-  string    public name;
-  address[] public prizeTokens;
-  uint256   public depositLimit;
-  uint256   public execLimit;
-  uint32    public execTimestamp;
-  uint32    public execDelay;
-  string    public sponsoredBy;
+    string    public name;
+    address[] public prizeTokens;
+    uint256   public depositLimit;
+    uint256   public execLimit;
+    uint32    public execTimestamp;
+    uint32    public execDelay;
+    string    public sponsoredBy;
 
-  constructor(
-      string    memory newName,
-      address[] memory newPrizeTokens,
-      uint256          newDepositLimit,
-      uint256          newExecLimit,
-      uint32           newExecTimestamp,
-      uint32           newExecDelay,
-      string    memory newSponsoredBy)
-    public {
+    constructor(
+          string    memory paramName,
+          address[] memory paramPrizeTokens,
+          uint256          paramDepositLimit,
+          uint256          paramExecLimit,
+          uint32           paramExecTimestamp,
+          uint32           paramExecDelay,
+          string    memory paramSponsoredBy)
+      public {
 
-    setName(newName);
-    setPrizeTokens(newPrizeTokens);
-    setDepositLimit(newDepositLimit);
-    setExecLimit(newExecLimit);
-    setExecTimestamp(newExecTimestamp);
-    setExecDelay(newExecDelay);
-    setSponsoredBy(newSponsoredBy);
-  }
+        setName(paramName);
+        setPrizeTokens(paramPrizeTokens);
+        setDepositLimit(paramDepositLimit);
+        setExecLimit(paramExecLimit);
+        setExecTimestamp(paramExecTimestamp);
+        setExecDelay(paramExecDelay);
+        setSponsoredBy(paramSponsoredBy);
+    }
 
-  function deposit() public {
+    function deposit() public {
 
-  }
+    }
 
-  function execute() public {
+    function execute() public {
 
-  }
+    }
 
-  function verifyWinner() public {
+    function verifyWinner() public {
   
-  }
+    }
 
-  function setName(string memory newName) onlyOwner public {
-    name = newName;
-  }
-  function setPrizeTokens(address[] memory newPrizeTokens) onlyOwner public {
-    prizeTokens = newPrizeTokens;
-  }
-  function setDepositLimit(uint256 newDepositLimit) onlyOwner public {
-    depositLimit = newDepositLimit;
-  }
-  function setExecLimit(uint256 newExecLimit) onlyOwner public {
-    execLimit = newExecLimit;
-  }
-  function setExecTimestamp(uint32 newExecTimestamp) onlyOwner public {
-    execTimestamp = newExecTimestamp;
-  }
-  function setExecDelay(uint32 newExecDelay) onlyOwner public {
-    execDelay = newExecDelay;
-  }
-  function setSponsoredBy(string memory newSponsoredBy) onlyOwner public {
-    sponsoredBy = newSponsoredBy;
-  }
+    function setName(string memory paramName) onlyOwner public {
+        name = paramName;
+    }
+    function setPrizeTokens(address[] memory paramPrizeTokens) onlyOwner public {
+        prizeTokens = paramPrizeTokens;
+    }
+    function setDepositLimit(uint256 paramDepositLimit) onlyOwner public {
+        depositLimit = paramDepositLimit;
+    }
+    function setExecLimit(uint256 paramExecLimit) onlyOwner public {
+        execLimit = paramExecLimit;
+    }
+    function setExecTimestamp(uint32 paramExecTimestamp) onlyOwner public {
+        execTimestamp = paramExecTimestamp;
+    }
+    function setExecDelay(uint32 paramExecDelay) onlyOwner public {
+        execDelay = paramExecDelay;
+    }
+    function setSponsoredBy(string memory paramSponsoredBy) onlyOwner public {
+        sponsoredBy = paramSponsoredBy;
+    }
 }
