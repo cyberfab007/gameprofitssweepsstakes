@@ -48,6 +48,18 @@ contract Ticket is Owned, ERC721Full {
         return true;
     }
 
+    /// @notice Create `amount` tokens and send it to `target`
+    /// @param target address to receive the tokens
+    /// @param amount the amount of tokens it will receive
+    function mintAmount(address target, uint256 amount) onlyOwner public {
+        for (uint256 tokenId = 0; tokenId < 2**256-1 && amount > 0; tokenId++) {
+            if (!_exists(tokenId)) {
+                _mint(target, tokenId);
+                amount--;
+            }
+        }
+    }
+
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
     /// @param target Address to be frozen
     /// @param freeze either to freeze it or not

@@ -1,7 +1,7 @@
 pragma solidity >=0.4.22 <0.6.0;
 
 import "./Owned.sol";
-import "./Token.sol";
+import "./Ticket.sol";
 
 contract Raffle is Owned {
 
@@ -14,7 +14,7 @@ contract Raffle is Owned {
     string    public sponsoredBy;
 
     mapping (address => uint256[]) public bets;
-    mapping (address => MyAdvancedToken) prizeTokensInstances;
+    mapping (address => Ticket) prizeTokensInstances;
 
     constructor(
           string    memory _name,
@@ -76,7 +76,7 @@ contract Raffle is Owned {
     function updatePrizeTokensInstances(bool reset) private {
         for (uint256 i = 0; i < prizeTokens.length; i++) {
             prizeTokensInstances[prizeTokens[i]] = 
-              MyAdvancedToken(reset ? address(0x0) : prizeTokens[i]);
+              Ticket(reset ? address(0x0) : prizeTokens[i]);
         }
     }
     function setDepositLimit(uint256 _depositLimit) onlyOwner public {
