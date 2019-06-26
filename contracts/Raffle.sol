@@ -34,14 +34,14 @@ contract Raffle is Owned {
         setSponsoredBy(_sponsoredBy);
     }
 
-     /**
+    /**
      * Called by players when they want to deposit tickets. The winner will be identified 
      * by the account belonging to the address of the sender depositing the tickets.
      *
      * @ _prizeToken the prize token which the player wants to deposit to make a bet
      * @ _ticketNumbers the ticket numbers on which the player deposits his prize token earnings
      */
-    function deposit(address _prizeToken, uint256[] memory _ticketNumbers) public {
+    /*function deposit(address _prizeToken, uint256[] memory _ticketNumbers) public {
         
         // check the token a player is going to use is one of prize tokens
         require(prizeTokensInstances[_prizeToken] != MyAdvancedToken(0x0));
@@ -55,7 +55,7 @@ contract Raffle is Owned {
         
         // save the bet
         bets[msg.sender] = _ticketNumbers;
-    }
+    }*/
 
     function execute() public {
 
