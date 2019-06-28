@@ -1027,4 +1027,3 @@ contract Ticket is Owned, ERC721Full {
         msg.sender.transfer(sellPrice);                     // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
-
