@@ -1,9 +1,9 @@
 pragma solidity >=0.4.22 <0.6.0;
 
 import "./Owned.sol";
-import "./Ticket.sol";
+import "./IERC721Receiver.sol";
 
-contract Raffle is Owned {
+contract Raffle is Owned, IERC721Receiver {
 
     string    public name;
     address[] public prizeTokens;
@@ -13,8 +13,7 @@ contract Raffle is Owned {
     uint32    public execDelay;
     string    public sponsoredBy;
 
-    mapping (address => uint256[]) public bets;
-    mapping (address => Ticket) prizeTokensInstances;
+    mapping (address => uint256[]) public entries;
 
     constructor(
           string    memory _name,
@@ -34,28 +33,15 @@ contract Raffle is Owned {
         setSponsoredBy(_sponsoredBy);
     }
 
-    /**
-     * Called by players when they want to deposit tickets. The winner will be identified 
-     * by the account belonging to the address of the sender depositing the tickets.
-     *
-     * @ _prizeToken the prize token which the player wants to deposit to make a bet
-     * @ _ticketNumbers the ticket numbers on which the player deposits his prize token earnings
-     */
-    /*function deposit(address _prizeToken, uint256[] memory _ticketNumbers) public {
-        
-        // check the token a player is going to use is one of prize tokens
-        require(prizeTokensInstances[_prizeToken] != MyAdvancedToken(0x0));
+    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data)
+      public returns (bytes4) {
 
-        MyAdvancedToken prizeTokenContract = MyAdvancedToken(_prizeToken);
+        require(isPrizeToken(msg.sender));     // check msg.sender is a prize token
 
-        // check the player has enough prize token
-        prizeTokenContract.balanceOf(msg.sender);
-        
-        // ...
-        
-        // save the bet
-        bets[msg.sender] = _ticketNumbers;
-    }*/
+        entries[_from].push(_tokenId);         // record that the player deposited the ticket to the raffle
+
+        return this.onERC721Received.selector; // must return this value. See ERC721._checkOnERC721Received()
+    }
 
     function execute() public {
 
@@ -65,19 +51,20 @@ contract Raffle is Owned {
   
     }
 
+    function isPrizeToken(address a) private view returns (bool) {
+        for (uint256 i = 0; i < prizeTokens.length; i++) {
+            if (a == prizeTokens[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function setName(string memory _name) onlyOwner public {
         name = _name;
     }
     function setPrizeTokens(address[] memory _prizeTokens) onlyOwner public {
-        updatePrizeTokensInstances(true);
         prizeTokens = _prizeTokens;
-        updatePrizeTokensInstances(false);
-    }
-    function updatePrizeTokensInstances(bool reset) private {
-        for (uint256 i = 0; i < prizeTokens.length; i++) {
-            prizeTokensInstances[prizeTokens[i]] = 
-              Ticket(reset ? address(0x0) : prizeTokens[i]);
-        }
     }
     function setDepositLimit(uint256 _depositLimit) onlyOwner public {
         depositLimit = _depositLimit;
