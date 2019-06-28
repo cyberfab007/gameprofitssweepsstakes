@@ -53,7 +53,7 @@ contract Raffle is Owned, IERC721Receiver {
     }
 
     function verifyWinner() public {
-        // TODO check player still owns the token or maybe it's sold to someone else who didn't participate in this raffle
+        
     }
 
     function isPrizeToken(address a) private view returns (bool) {
