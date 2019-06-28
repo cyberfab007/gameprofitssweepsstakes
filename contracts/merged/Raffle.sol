@@ -194,7 +194,7 @@ contract Raffle is Owned, IERC721Receiver {
     string    public sponsoredBy;
 
     mapping (uint256 => address) public addressByTicket;
-    Counters.Counter public ticketsCounter;
+    Counters.Counter public ticketCounter;
 
     constructor(
           string    memory _name,
@@ -218,10 +218,8 @@ contract Raffle is Owned, IERC721Receiver {
       public returns (bytes4) {
         require(isPrizeToken(msg.sender));       // check msg.sender is a prize token
 
-        if (addressByTicket[_tokenId] == address(0)) { // if the ticket is used for the first time - 
-            ticketsCounter.increment();                // increment ticket counted to compare to execLimit later
-        }
         addressByTicket[_tokenId] = _from;       // record that the player deposited the ticket to the raffle (overwrite if necessary)
+        ticketCounter.increment();               // increment ticket counter to compare to execLimit later
 
         return this.onERC721Received.selector;   // must return this value. See ERC721._checkOnERC721Received()
     }

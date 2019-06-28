@@ -10,7 +10,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build-contracts": "sol-merger \"./contracts/*.sol\" ./build",
+    "merge": "sol-merger \"./contracts/Ticket.sol\" ./contracts/merged && sol-merger \"./contracts/Raffle.sol\" ./contracts/merged",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
