@@ -2,8 +2,10 @@ pragma solidity >=0.4.22 <0.6.0;
 
 import "./Owned.sol";
 import "./IERC721Receiver.sol";
+import "./Counters.sol";
 
 contract Raffle is Owned, IERC721Receiver {
+    using Counters for Counters.Counter;
 
     string    public name;
     address[] public prizeTokens;
@@ -13,7 +15,8 @@ contract Raffle is Owned, IERC721Receiver {
     uint32    public execDelay;
     string    public sponsoredBy;
 
-    mapping (address => uint256[]) public entries;
+    mapping (uint256 => address) public addressByTicket;
+    Counters.Counter public ticketsCounter;
 
     constructor(
           string    memory _name,
@@ -35,12 +38,14 @@ contract Raffle is Owned, IERC721Receiver {
 
     function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data)
       public returns (bytes4) {
+        require(isPrizeToken(msg.sender));       // check msg.sender is a prize token
 
-        require(isPrizeToken(msg.sender));     // check msg.sender is a prize token
+        if (addressByTicket[_tokenId] == address(0)) { // if the ticket is used for the first time - 
+            ticketsCounter.increment();                // increment ticket counted to compare to execLimit later
+        }
+        addressByTicket[_tokenId] = _from;       // record that the player deposited the ticket to the raffle (overwrite if necessary)
 
-        entries[_from].push(_tokenId);         // record that the player deposited the ticket to the raffle
-
-        return this.onERC721Received.selector; // must return this value. See ERC721._checkOnERC721Received()
+        return this.onERC721Received.selector;   // must return this value. See ERC721._checkOnERC721Received()
     }
 
     function execute() public {
@@ -48,7 +53,7 @@ contract Raffle is Owned, IERC721Receiver {
     }
 
     function verifyWinner() public {
-  
+        // TODO check player still owns the token or maybe it's sold to someone else who didn't participate in this raffle
     }
 
     function isPrizeToken(address a) private view returns (bool) {
