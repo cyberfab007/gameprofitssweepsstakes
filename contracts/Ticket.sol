@@ -28,24 +28,16 @@ contract Ticket is Owned, ERC721Full {
      * @param _data some extra information to send to the approved contract
      */
     function approveAndCall(address _spender, uint256 _tokenId, bytes memory _data) public returns (bool success) {
-        IERC721Receiver spender = IERC721Receiver(_spender);
-        if (_approve(_spender, _tokenId)) {
-            spender.onERC721Received(address(this), msg.sender, _tokenId, _data);
-            return true;
-        }
+        approve(_to, _tokenId);
+        require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
+        return true;
     }
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint256 _tokenId) internal {
-        require(!frozenAccount[_from]);                         // Check if sender is frozen
-        require(!frozenAccount[_to]);                           // Check if recipient is frozen
-        safeTransferFrom(_from, _to, _tokenId);
-    }
-
-    /* Internal approve, only can be called by this contract */
-    function _approve(address _to, uint256 _tokenId) private returns (bool success) {
-        approve(_to, _tokenId);
-        return true;
+        require(!frozenAccount[_from]);     // check if sender is frozen
+        require(!frozenAccount[_to]);       // check if recipient is frozen
+        safeTransferFrom(_from, _to, _tokenId, keccak256(_from, _tokenId));
     }
 
     /// @notice Create `amount` tokens and send it to `target`
@@ -90,5 +82,9 @@ contract Ticket is Owned, ERC721Full {
     function sell(uint256 tokenId) public {
         _transfer(msg.sender, address(this), tokenId);      // makes the transfers
         msg.sender.transfer(sellPrice);                     // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
+
+    function deposit(address raffle, uint256 tokenId) public {
+        _transfer(msg.sender, raffle, tokenId);
     }
 }
