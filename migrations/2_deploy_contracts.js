@@ -1,5 +1,5 @@
-const Token = artifacts.require("MyAdvancedToken");
+const Ticket = artifacts.require("Ticket");
 
 module.exports = function(deployer) {
-  deployer.deploy(Token, 1000, "Test Name", "TEST");
+  deployer.deploy(Ticket, "Test Name", "TEST");
 }
