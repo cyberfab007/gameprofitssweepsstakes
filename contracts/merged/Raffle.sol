@@ -193,8 +193,15 @@ contract Raffle is Owned, IERC721Receiver {
     uint32    public execDelay;
     string    public sponsoredBy;
 
-    mapping (uint256 => address) public addressByTicket;
-    Counters.Counter public ticketCounter;
+    mapping (address => bytes32) playerToHash;
+    mapping (uint256 => address) numberToPlayer;
+
+    uint256[] public numbers;
+    uint256[] public winningNumbers;
+    address public winner;
+
+    enum LotteryState { FirstRound, SecondRound, Finished }
+    LotteryState state;
 
     constructor(
           string    memory _name,
@@ -216,22 +223,66 @@ contract Raffle is Owned, IERC721Receiver {
 
     function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data)
       public returns (bytes4) {
-        require(isPrizeToken(msg.sender));       // check msg.sender is a prize token
-
-        addressByTicket[_tokenId] = _from;       // record that the player deposited the ticket to the raffle (overwrite if necessary)
-        ticketCounter.increment();               // increment ticket counter to compare to execLimit later
-
-        return this.onERC721Received.selector;   // must return this value. See ERC721._checkOnERC721Received()
+        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
+        playerToHash[msg.sender] = bytesToBytes32(_data, 0);  // record that the player deposited the ticket to the raffle
+        return this.onERC721Received.selector;                // must return this value. See ERC721._checkOnERC721Received()
     }
 
-    function execute() public {
 
+    function runSecondRound() public onlyOwner {
+        require(state == LotteryState.FirstRound);
+        state = LotteryState.SecondRound;
+    }
+    
+    function claimTickets(uint256 number) public {
+        require(state == LotteryState.SecondRound);                                     // allow claiming ticket numbers in the second round only
+        require(keccak256(abi.encode(number, msg.sender)) == playerToHash[msg.sender]); // check msg.sender submitted the number in the first number
+        numberToPlayer[number] = msg.sender;
+        numbers.push(number);
     }
 
-    function verifyWinner() public {
+    function execute() public onlyOwner {
+        require(state == LotteryState.SecondRound);  // allow raffle execution in the second round only
+        state = LotteryState.Finished;
+
+        uint256 seedNumberIndex = 0;
+        for (uint256 i = 0; i < 10; i++) {
+            uint256 randomNumber = numbers[getRandomNumberIndex(seedNumberIndex)];
+            seedNumberIndex = winningNumbers.push(randomNumber);
+        }
         
+        verifyWinner();
     }
 
+    function verifyWinner() private {
+        for (uint256 i = 0; i < winningNumbers.length; i++) {
+            winner = numberToPlayer[winningNumbers[i]];
+            // TODO verification
+            if (winner != address(0)) {
+                break;
+            }
+        }
+        distributeFunds();
+    }
+
+    function distributeFunds() private {
+        // TODO
+    }
+
+    function getRandomNumberIndex(uint256 seedNumberIndex) private view returns (uint256) {
+        uint256 seed = numbers[seedNumberIndex];
+        for (uint256 i = 1; i < numbers.length; ++i) {
+            seed ^= numbers[i];
+        }
+        return seed % numbers.length;
+    }
+    function bytesToBytes32(bytes memory b, uint offset) private pure returns (bytes32) {
+        bytes32 out;
+        for (uint i = 0; i < 32; i++) {
+            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
     function isPrizeToken(address a) private view returns (bool) {
         for (uint256 i = 0; i < prizeTokens.length; i++) {
             if (a == prizeTokens[i]) {
