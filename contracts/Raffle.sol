@@ -1,14 +1,19 @@
 pragma solidity >=0.4.22 <0.6.0;
 
-import "./Owned.sol";
-import "./IERC721Receiver.sol";
 import "./Counters.sol";
+import "./Owned.sol";
+import "./IERC20.sol";
+import "./IExtERC20Receiver.sol";
+import "./IERC721Receiver.sol";
+import "./ITicketReceiver.sol";
 
-contract Raffle is Owned, IERC721Receiver {
+contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     using Counters for Counters.Counter;
 
     string    public name;
+    address   public ticketToken;
     address[] public prizeTokens;
+    bool      public prizeEtherAllowed;
     uint256   public depositLimit;
     uint256   public execLimit;
     uint32    public execTimestamp;
@@ -22,12 +27,17 @@ contract Raffle is Owned, IERC721Receiver {
     uint256[] public winningNumbers;
     address public winner;
 
-    enum LotteryState { FirstRound, SecondRound, Finished }
+    mapping (address => uint256)   public prizeERC20;
+    mapping (address => uint256[]) public prizeERC721;
+
+    enum LotteryState { ZeroRound, FirstRound, SecondRound, Finished }
     LotteryState state;
 
     constructor(
           string    memory _name,
+          address          _ticketToken,
           address[] memory _prizeTokens,
+          bool             _prizeEtherAllowed,
           uint256          _depositLimit,
           uint256          _execLimit,
           uint32           _execTimestamp,
@@ -35,7 +45,9 @@ contract Raffle is Owned, IERC721Receiver {
           string    memory _sponsoredBy)
       public {
         setName(_name);
+        setTicketToken(_ticketToken);
         setPrizeTokens(_prizeTokens);
+        setPrizeEtherAllowed(_prizeEtherAllowed);
         setDepositLimit(_depositLimit);
         setExecLimit(_execLimit);
         setExecTimestamp(_execTimestamp);
@@ -43,11 +55,61 @@ contract Raffle is Owned, IERC721Receiver {
         setSponsoredBy(_sponsoredBy);
     }
 
-    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data)
-      public returns (bytes4) {
+    /**
+     * Called by someone who wants to deposit Ether to this contract
+     *
+     */
+    function depositEther() payable {
         require(state == LotteryState.FirstRound);            // allow deposits in the first round only
-        playerToHash[msg.sender] = bytesToBytes32(_data, 0);  // record that the player deposited the ticket to the raffle
+        require(prizeEtherAllowed);                           // check ether allowed as a prize token
+        require(owner == msg.sender);                         // accept deposits from owner's account only
+                            // address(this).balance to see total deposit
+    }
+
+    /**
+     * Called by someone who approved ERC20 tokens to this contract, if the ERC20 token does not notify this contract itself
+     *
+     */
+    function depositERC20(address token, uint256 value) public onlyOwner {
+        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
+        require(isPrizeToken(token));                         // check deposited token is one of prize tokens
+        require(owner == msg.sender);                         // accept deposits from owner's account only
+        IERC20(token).transferFrom(msg.sender, address(this), value);  // complete the transfer
+        prizeERC20[token] += value;                           // record the deposit
+    }
+
+    /**
+     * Called by ERC20 token contracts, when someone sends such a token to this contract
+     *
+     */
+    function receiveApproval(address from, uint256 value, address token, bytes memory data) public onlyOwner {
+        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
+        require(isPrizeToken(token));                         // check deposited token is one of prize tokens
+        require(owner == from);                               // accept deposits from owner's account only
+        prizeERC20[token] += value;                           // record the deposit
+    }
+
+    /**
+     * Called by ERC721 token contracts, when someone sends such a token to this contract
+     *
+     */
+    function onERC721Received(address token, address from, uint256 tokenId, bytes memory data) public onlyOwner returns (bytes4) {
+        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
+        require(isPrizeToken(token));                         // check deposited token is one of prize tokens
+        require(owner == from);                               // accept deposits from owner's account only
+        prizeERC721[token].push(tokenId);                     // record the deposit
         return this.onERC721Received.selector;                // must return this value. See ERC721._checkOnERC721Received()
+    }
+
+    /**
+     * Called by Ticket token contracts, when someone sends such a Ticket to this contract
+     *
+     */
+    function onTicketReceived(address token, bytes32 hash) public returns (bytes4) {
+        require(state == LotteryState.FirstRound);            // allow ticket deposits in the first round only
+        require(token == ticketToken);                        // check deposited ticket can be used in this raffle
+        playerToHash[msg.sender] = hash;                      // record that the player deposited the ticket to the raffle
+        return this.onTicketReceived.selector;                // must return this value. See ERC721._checkOnERC721Received()
     }
 
 
@@ -117,8 +179,14 @@ contract Raffle is Owned, IERC721Receiver {
     function setName(string memory _name) onlyOwner public {
         name = _name;
     }
+    function setTicketToken(address _ticketToken) onlyOwner public {
+        ticketToken = _ticketToken;
+    }
     function setPrizeTokens(address[] memory _prizeTokens) onlyOwner public {
         prizeTokens = _prizeTokens;
+    }
+    function setPrizeEtherAllowed(address[] memory _prizeEtherAllowed) onlyOwner public {
+        prizeEtherAllowed = _prizeEtherAllowed;
     }
     function setDepositLimit(uint256 _depositLimit) onlyOwner public {
         depositLimit = _depositLimit;
