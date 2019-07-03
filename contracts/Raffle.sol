@@ -30,7 +30,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     mapping (address => uint256)   public prizeERC20;
     mapping (address => uint256[]) public prizeERC721;
 
-    enum LotteryState { ZeroRound, FirstRound, SecondRound, Finished }
+    enum LotteryState { FirstRound, SecondRound, Finished }
     LotteryState state;
 
     constructor(
@@ -59,7 +59,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by someone who wants to deposit Ether to this contract
      *
      */
-    function depositEther() payable {
+    function depositEther() public payable {
         require(state == LotteryState.FirstRound);            // allow deposits in the first round only
         require(prizeEtherAllowed);                           // check ether allowed as a prize token
         require(owner == msg.sender);                         // accept deposits from owner's account only
@@ -103,7 +103,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
     /**
      * Called by Ticket token contracts, when someone sends such a Ticket to this contract
-     *
+     * NOTE: we must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted 
      */
     function onTicketReceived(address token, bytes32 hash) public returns (bytes4) {
         require(state == LotteryState.FirstRound);            // allow ticket deposits in the first round only
@@ -185,7 +185,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     function setPrizeTokens(address[] memory _prizeTokens) onlyOwner public {
         prizeTokens = _prizeTokens;
     }
-    function setPrizeEtherAllowed(address[] memory _prizeEtherAllowed) onlyOwner public {
+    function setPrizeEtherAllowed(bool _prizeEtherAllowed) onlyOwner public {
         prizeEtherAllowed = _prizeEtherAllowed;
     }
     function setDepositLimit(uint256 _depositLimit) onlyOwner public {

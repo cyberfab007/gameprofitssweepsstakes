@@ -938,6 +938,25 @@ contract ERC721Full is ERC721, ERC721Enumerable, ERC721Metadata {
     }
 }
 
+/**
+ * @title Ticket token receiver interface
+ * @dev Interface for any contract that wants to support deposits from Ticket contracts.
+ */
+contract ITicketReceiver {
+    /**
+     * @notice Handle the receipt of a Ticket
+     * @dev The Ticket smart contract calls this function on the recipient
+     * after a `deposit`. This function MUST return the function selector,
+     * otherwise the caller will revert the transaction. The selector to be
+     * returned can be obtained as `this.onTicketReceived.selector`. This
+     * function MAY throw to revert and reject the transfer.
+     * @param operator Address of the Ticket contract (which called this function)
+     * @param hash Keccak256 hash of the NFT sender and its identifier
+     * @return bytes4 `bytes4(keccak256("onTicketReceived(address,bytes32)"))`
+     */
+    function onTicketReceived(address operator, bytes32 hash) public returns (bytes4);
+}
+
 contract Ticket is Owned, ERC721Full {
 
     uint256 public sellPrice;
@@ -966,15 +985,6 @@ contract Ticket is Owned, ERC721Full {
     }
 
     /**
-     * @notice Used by players to deposit a token identified by `tokenId` to a `raffle`
-     * @param raffle Raffle contract address
-     * @param tokenId Identifier of deposited token
-     */
-    function deposit(address raffle, uint256 tokenId) public {
-        _transfer(msg.sender, raffle, tokenId);
-    }
-
-    /**
      * @notice Set allowance for other address and notify
      *         
      *         Allows `spender` to spend a token in sender's behalf, 
@@ -984,9 +994,24 @@ contract Ticket is Owned, ERC721Full {
      * @param tokenId Identifier of token they can spend
      */
     function approveAndCall(address spender, uint256 tokenId) public returns (bool success) {
-        bytes memory data = abi.encodePacked(keccak256(abi.encodePacked(msg.sender, tokenId)));
-        require(_checkOnERC721Received(msg.sender, spender, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer");
+        approve(spender, tokenId);
+        require(_checkOnTicketReceived(spender, tokenId), "Ticket: transfer to non ITicketReceiver implementer");
         return true;
+    }
+
+    /**
+     * @dev Internal function to invoke `onTicketReceived` on a target address.
+     * The call is not executed if the target address is not a contract.
+     * @param spender target address that will receive the tokens
+     * @param tokenId uint256 ID of the token to be transferred
+     * @return bool whether the call correctly returned the expected magic value
+     */
+    function _checkOnTicketReceived(address spender, uint256 tokenId) internal returns (bool) {
+        if (!spender.isContract()) return true;
+        bytes32 hash = keccak256(abi.encodePacked(msg.sender, tokenId));
+        ITicketReceiver ticketReceiver = ITicketReceiver(spender);
+        bytes4 retval = ticketReceiver.onTicketReceived(address(this), hash);
+        return (retval == ticketReceiver.onTicketReceived.selector);
     }
 
     /**
