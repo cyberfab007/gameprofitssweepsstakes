@@ -3,7 +3,7 @@ const AdvancedToken = artifacts.require("AdvancedToken")
 
 contract("AdvancedToken Test", accounts => {
 
-    it("should approveAndCall 250 ADV from 0 to 5", () => {
+    it("should approveAndCall() and transferFrom() 10000000000 ADV from 0 to 5", () => {
         let deployed;
         return AdvancedToken.deployed()
           .then(instance => {

@@ -3,7 +3,7 @@ const ERC721 = artifacts.require("ERC721Full")
 
 contract("ERC721 Test", accounts => {
 
-    it("should mint ERC721 token #777 for the first account", () => {
+    it("should mint ERC721 token #777 for 0", () => {
         let deployed;
         return ERC721.deployed()
           .then(instance => {
@@ -16,7 +16,7 @@ contract("ERC721 Test", accounts => {
           .then(owner => assert.equal(owner, accounts[0], "Wrong owner"))
     })
 
-    it("should transfer ERC721 #777 from the first to the fifth account", () => {
+    it("should transfer ERC721 #777 from 0 to 5", () => {
         let deployed;
         return ERC721.deployed()
           .then(instance => {
