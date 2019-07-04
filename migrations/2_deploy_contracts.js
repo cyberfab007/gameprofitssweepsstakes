@@ -4,6 +4,14 @@ const ERC721Full = artifacts.require("ERC721Full")
 const AdvancedToken = artifacts.require("AdvancedToken")
 const ERC20 = artifacts.require("ERC20")
 
+module.exports = function(deployer) {
+    deployer.deploy(Ticket, "Ticket", "TICKET")
+    deployer.deploy(ERC721Full, "ERC-721 Standard", "ERC721")
+    deployer.deploy(AdvancedToken, 1000, "Advanced Token", "ADV")
+    deployer.deploy(ERC20, 1000000, "ERC-20 Standard", "ERC20")
+}
+
+/*
 const Web3 = require("web3")
 let web3, accs
 
@@ -31,10 +39,9 @@ async function getBalance(addr) {
     return result
 }
 
+    iterate(deployer, '')
+    console.log(deployer)
 
-module.exports = function(deployer) {
-
-    //iterate(deployer, '')
     const network = deployer.networks[deployer.network]
     
     web3 = new Web3(new Web3.providers.HttpProvider("http://" + network.host + ":" + network.port))
@@ -47,27 +54,8 @@ module.exports = function(deployer) {
         })
 
     })
+*/
 
-    deployer.deploy(Ticket, "Ticket", "TICKET").then(function(instance) {
-        instance.mintAmount(accs[0], 25).then(function() {
-            instance.balanceOf(accs[0]).then(function(balance) {
-                console.log("#### accs[0] ticket balance before transferring: " + balance + "####")
-                instance.safeTransferFrom(accs[0], accs[5], 22).then(function() {
-                    instance.balanceOf(accs[0]).then(function(balance) {
-                        console.log("#### accs[0] ticket balance after transferring: " + balance + "####")
-                        instance.ownerOf(22).then(function(owner) {
-                            console.log("#### the owner of ticket #22: " + owner + "####")
-                        })
-                    })
-                })
-            })
-        })
-    })
 
-    deployer.deploy(ERC721Full, "ERC-721 Standard", "ERC721");
-    deployer.deploy(AdvancedToken, 1000, "Advanced Token", "ADV");
-    deployer.deploy(ERC20, 1000000, "ERC-20 Standard", "ERC20");
-
-}
 
 

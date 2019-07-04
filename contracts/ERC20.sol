@@ -105,7 +105,7 @@ contract ERC20 is IERC20 {
      */
     function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount));
+        _approve(sender, recipient, _allowances[sender][recipient].sub(amount));
         return true;
     }
 

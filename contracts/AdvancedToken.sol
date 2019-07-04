@@ -1,12 +1,13 @@
  
 pragma solidity >=0.4.22 <0.6.0;
 
-import "./Owned.sol";
 import "./IERC20.sol";
 import "./IExtERC20Receiver.sol";
-
+import "./Owned.sol";
+import "./Address.sol";
 
 contract ExtERC20 is IERC20 {
+    using Address for address;
 
     // Public variables of the token
     string public name;
@@ -87,8 +88,8 @@ contract ExtERC20 is IERC20 {
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        require(_value <= allowance[_from][_to]);     // Check allowance
+        allowance[_from][_to] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
@@ -101,8 +102,7 @@ contract ExtERC20 is IERC20 {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
@@ -117,16 +117,17 @@ contract ExtERC20 is IERC20 {
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
-    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData)
-        public
-        returns (bool success) {
-        IExtERC20Receiver spender = IExtERC20Receiver(_spender);
+    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool success) {
         if (approve(_spender, _value)) {
-            address _operator = address(this);
-            address _from = msg.sender;
-            spender.receiveApproval(_from, _value, _operator, _extraData);
+            if (_spender.isContract()) {
+                IExtERC20Receiver spender = IExtERC20Receiver(_spender);
+                address _operator = address(this);
+                address _from = msg.sender;
+                spender.receiveApproval(_from, _value, _operator, _extraData);
+            }
             return true;
         }
+        return false;
     }
 
     /**

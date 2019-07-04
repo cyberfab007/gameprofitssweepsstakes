@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./ERC721.sol";
+import "./ERC721Mintable.sol";
 import "./ERC721Enumerable.sol";
 import "./ERC721Metadata.sol";
 
@@ -10,7 +11,7 @@ import "./ERC721Metadata.sol";
  * Moreover, it includes approve all functionality using operator terminology
  * @dev see https://eips.ethereum.org/EIPS/eip-721
  */
-contract ERC721Full is ERC721, ERC721Enumerable, ERC721Metadata {
+contract ERC721Full is ERC721Mintable, ERC721Enumerable, ERC721Metadata {
     constructor (string memory name, string memory symbol) public ERC721Metadata(name, symbol) {
         // solhint-disable-previous-line no-empty-blocks
     }
