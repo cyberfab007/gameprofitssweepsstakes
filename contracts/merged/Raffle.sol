@@ -348,10 +348,9 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     function depositEther()
       public payable onlyOwner {
-        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
-        require(prizeEtherAllowed);                           // check ether allowed as a prize token
-        require(owner == msg.sender);                         // accept deposits from owner's account only
-                            // address(this).balance to see total deposit
+        require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
+        require(prizeEtherAllowed, "Deposit: ether deposits not allowed");
+        require(owner == msg.sender, "Deposit: Depositor is not raffle owner");
     }
 
     /**
@@ -360,9 +359,9 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     function receiveApproval(address from, uint256 value, address token, bytes memory data)
       public {
-        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
-        require(isPrizeToken(token));                         // check deposited token is one of prize tokens
-        require(owner == from);                               // accept deposits from owner's account only
+        require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
+        require(isPrizeToken(token), string(abi.encodePacked("Deposit: wrong prize token ", addr2str(msg.sender))));
+        require(owner == from, "Deposit: Depositor is not raffle owner");
         prizeERC20[token] += value;                           // record the deposit
     }
 
@@ -375,7 +374,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         if (msg.sender != ticketToken) {
             require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
             require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit: wrong prize token ", addr2str(msg.sender))));
-            require(owner == from, "Deposite: Depositor is not raffle owner");
+            require(owner == from, "Deposit: Depositor is not raffle owner");
             prizeERC721[msg.sender].push(tokenId);    // record the deposit
         }
         return this.onERC721Received.selector;        // must return this value. See ERC721._checkOnERC721Received()

@@ -2,7 +2,7 @@
 const ERC721 = artifacts.require("ERC721Full")
 const Raffle = artifacts.require("Raffle")
 
-contract("ERC721 Test", accounts => {
+contract("Deposit ERC721 Test", accounts => {
 
     it("should mint() ERC721 token #888 for 0", () => {
         let deployed;

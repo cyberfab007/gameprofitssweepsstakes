@@ -2,7 +2,7 @@
 const Ticket = artifacts.require("Ticket")
 const Raffle = artifacts.require("Raffle")
 
-contract("Ticket Test", accounts => {
+contract("Deposit Ticket Test", accounts => {
 
     it("should mintAmount() 25 Tickets for 0", () => {
         let deployed;

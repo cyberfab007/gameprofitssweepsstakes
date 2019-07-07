@@ -2,7 +2,7 @@
 const AdvancedToken = artifacts.require("AdvancedToken")
 const Raffle = artifacts.require("Raffle")
 
-contract("AdvancedToken Test", accounts => {
+contract("Deposit AdvancedToken Test", accounts => {
 
     it("should approveAndCall() and transferFrom() 10000000000 ADV from 0 to 5", () => {
         let deployed;

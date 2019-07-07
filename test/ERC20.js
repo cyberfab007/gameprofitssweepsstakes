@@ -2,7 +2,7 @@
 const ERC20 = artifacts.require("ERC20")
 const Raffle = artifacts.require("Raffle")
 
-contract("ERC20 Test", accounts => {
+contract("Deposit ERC20 Test", accounts => {
 
     it("should approve() and transferFrom() 10000000000 ERC20 from 0 to 5", () => {
         let deployed;
