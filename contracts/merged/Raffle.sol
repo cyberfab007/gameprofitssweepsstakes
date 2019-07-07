@@ -293,6 +293,7 @@ contract ITicketReceiver {
 }
 
 contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
+
     using Counters for Counters.Counter;
 
     string    public name;
@@ -305,28 +306,39 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     uint32    public execDelay;
     string    public sponsoredBy;
 
+
     mapping (address => bytes32) playerToHash;
+
     mapping (uint256 => address) numberToPlayer;
 
     uint256[] public numbers;
+
     uint256[] public winningNumbers;
+
     address public winner;
 
-    // token address to amount of tokens
+
+    // prize token address to amount of prize tokens
     mapping (address => uint256)   public prizeERC20;
-    // token address to array of token ids
+
+    // prize token address to array of prize token ids
     mapping (address => uint256[]) public prizeERC721;
 
+
     enum LotteryState { FirstRound, SecondRound, Finished }
+
     LotteryState state;
+
     modifier onlyFirstRound {
         require(state == LotteryState.FirstRound, "Allowed in the 1st round only");
         _;
     }
+
     modifier onlySecondRound {
         require(state == LotteryState.SecondRound, "Allowed in the 2nd round only");
         _;
     }
+
 
     constructor(
           string    memory _name,
@@ -349,6 +361,9 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         setExecDelay(_execDelay);
         setSponsoredBy(_sponsoredBy);
     }
+
+
+    /*** DEPOSIT LOGIC ***/
 
     /**
      * Called by someone who wants to deposit Ether to this contract
@@ -407,7 +422,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         state = LotteryState.Finished;
 
         uint256 seedNumberIndex = 0;
-        for (uint256 i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 4; i++) {
             uint256 randomNumber = numbers[getRandomNumberIndex(seedNumberIndex)];
             seedNumberIndex = winningNumbers.push(randomNumber);
         }
