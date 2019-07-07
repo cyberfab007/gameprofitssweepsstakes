@@ -1,5 +1,6 @@
 
 const AdvancedToken = artifacts.require("AdvancedToken")
+const Raffle = artifacts.require("Raffle")
 
 contract("AdvancedToken Test", accounts => {
 
@@ -18,5 +19,20 @@ contract("AdvancedToken Test", accounts => {
           .then(() => deployed.balanceOf(accounts[5]))
           .then(balance => assert.equal(balance.toString(),             "5000000000", "Wrong balance"))
           .then(() => deployed.transferFrom.sendTransaction(accounts[0], accounts[5],  5000000000))
+    })
+
+    it("should approveAndCall() 23000001111 ADV from 0 to Raffle, and check receival via prizeERC20()", () => {
+        let adv, raffle;
+        return AdvancedToken.deployed()
+          .then(instance => {
+            adv = instance
+            return Raffle.deployed()
+          })
+          .then(instance => {
+            raffle = instance
+            return adv.approveAndCall(raffle.address, 23000001111, '0x42')
+           })
+          .then(() => raffle.prizeERC20(adv.address))
+          .then((depositedAmount) => assert.equal(depositedAmount, 23000001111))
     })
 })

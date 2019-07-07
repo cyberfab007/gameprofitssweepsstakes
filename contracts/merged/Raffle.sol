@@ -283,11 +283,11 @@ contract ITicketReceiver {
      * @dev The Ticket smart contract calls this function on the recipient
      * after a `deposit`. This function MUST return the function selector,
      * otherwise the caller will revert the transaction. The selector to be
-     * returned can be obtained as `this.onTicketReceived.selector`. This
-     * function MAY throw to revert and reject the transfer.
+     * returned can be obtained as `this.onTicketReceived.selector`.
+     * This function MAY throw to revert and reject the transfer.
      * @param from The address which previously owned the token
      * @param hash Keccak256 hash of the NFT sender and its identifier
-     * @return bytes4 `bytes4(keccak256("onTicketReceived(bytes32)"))`
+     * @return bytes4 `bytes4(keccak256("onTicketReceived(address,bytes32)"))`
      */
     function onTicketReceived(address from, bytes32 hash) public returns (bytes4);
 }
@@ -355,21 +355,8 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     }
 
     /**
-     * Called by someone who approved ERC20 tokens to this contract, if the ERC20 token does not notify this contract itself
-     *
-     */
-    function depositERC20(address token, uint256 value)
-      public onlyOwner {
-        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
-        require(isPrizeToken(token));                         // check deposited token is one of prize tokens
-        require(owner == msg.sender);                         // accept deposits from owner's account only
-        IERC20(token).transferFrom(msg.sender, address(this), value);  // complete the transfer
-        prizeERC20[token] += value;                           // record the deposit
-    }
-
-    /**
-     * Called by ERC20 token contracts, when someone sends such a token to this contract
-     *
+     * Called by ERC20 token contracts, when someone deposits such a token to this contract
+     * NOTE: If some ERC20 token contract doesn't implement calling this method, the depositor must call it manually 
      */
     function receiveApproval(address from, uint256 value, address token, bytes memory data)
       public {
@@ -380,7 +367,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     }
 
     /**
-     * Called by ERC721 token contracts, when someone sends such a token to this contract
+     * Called by ERC721 token contracts, when someone deposits such a token to this contract
      *
      */
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
@@ -391,19 +378,20 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
             require(owner == from, "Deposite: Depositor is not raffle owner");
             prizeERC721[msg.sender].push(tokenId);    // record the deposit
         }
-        return this.onERC721Received.selector;    // must return this value. See ERC721._checkOnERC721Received()
+        return this.onERC721Received.selector;        // must return this value. See ERC721._checkOnERC721Received()
     }
 
     /**
-     * Called by Ticket token contracts, when someone sends such a Ticket to this contract
-     * NOTE: we must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted 
+     * Called by Ticket token contracts, when someone deposits such a Ticket to this contract
+     * NOTE: We must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted
+     * NOTE2: We could also add a password provided by a Ticket depositor, so the hash will consist of (owner address + ticket number + password)
      */
     function onTicketReceived(address from, bytes32 hash)
       public returns (bytes4) {
         require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
         require(msg.sender == ticketToken, string(abi.encodePacked("Deposit: wrong ticket token ", addr2str(msg.sender))));
-        playerToHash[from] = hash;          // record that the player deposited the ticket to the raffle
-        return this.onTicketReceived.selector;    // must return this value. See ERC721._checkOnERC721Received()
+        playerToHash[from] = hash;                // record the deposit
+        return this.onTicketReceived.selector;    // must return this value. See Ticket._checkOnTicketReceived()
     }
 
 

@@ -17,7 +17,7 @@ contract("ERC721 Test", accounts => {
           .then(owner => assert.equal(owner, accounts[0], "Wrong owner"))
     })
 
-    it("should safeTransferFrom() ERC721 #888 from 0 to Raffle", () => {
+    it("should safeTransferFrom() ERC721 #888 from 0 to Raffle, and check receival via prizeERC721()", () => {
         let erc721, raffle;
         return ERC721.deployed()
           .then(instance => {
@@ -35,7 +35,7 @@ contract("ERC721 Test", accounts => {
           .then(() => erc721.ownerOf(888))
           .then(owner => assert.equal(owner, raffle.address, "Wrong owner"))
           .then(() => raffle.prizeERC721(erc721.address, 0))
-          .then((tokenId) => assert.equal(tokenId, 888))
+          .then((depositedTokenId) => assert.equal(depositedTokenId, 888))
     })
 
 })
