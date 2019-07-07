@@ -46,7 +46,7 @@ contract("Deposit Ticket Test", accounts => {
             return ticket.approveAndCall(raffle.address, 17)
           })
           .then(() => raffle.runSecondRound())
-          .then(() => raffle.claimTickets(17))
+          .then(() => raffle.claimTicket(17))
           .then(() => raffle.numbers(0))
     })
 

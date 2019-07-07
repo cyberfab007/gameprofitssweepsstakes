@@ -34,6 +34,14 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
     enum LotteryState { FirstRound, SecondRound, Finished }
     LotteryState state;
+    modifier onlyFirstRound {
+        require(state == LotteryState.FirstRound, "Allowed in the 1st round only");
+        _;
+    }
+    modifier onlySecondRound {
+        require(state == LotteryState.SecondRound, "Allowed in the 2nd round only");
+        _;
+    }
 
     constructor(
           string    memory _name,
@@ -61,35 +69,28 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by someone who wants to deposit Ether to this contract
      *
      */
-    function depositEther()
-      public payable onlyOwner {
-        require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
+    function depositEther() public payable onlyOwner onlyFirstRound {
         require(prizeEtherAllowed, "Deposit: ether deposits not allowed");
-        require(owner == msg.sender, "Deposit: Depositor is not raffle owner");
     }
 
     /**
      * Called by ERC20 token contracts, when someone deposits such a token to this contract
      * NOTE: If some ERC20 token contract doesn't implement calling this method, the depositor must call it manually 
      */
-    function receiveApproval(address from, uint256 value, address token, bytes memory data)
-      public {
-        require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
-        require(isPrizeToken(token), string(abi.encodePacked("Deposit: wrong prize token ", addr2str(msg.sender))));
-        require(owner == from, "Deposit: Depositor is not raffle owner");
-        prizeERC20[token] += value;                           // record the deposit
+    function receiveApproval(address from, uint256 value, address token, bytes memory data) public onlyFirstRound {
+        require(isPrizeToken(token), string(abi.encodePacked("Deposit ERC20: wrong prize token ", addr2str(msg.sender))));
+        require(owner == from, "Deposit ERC20: Depositor is not raffle owner");
+        prizeERC20[token] += value;                   // record the deposit
     }
 
     /**
      * Called by ERC721 token contracts, when someone deposits such a token to this contract
      *
      */
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
-      public returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data) public onlyFirstRound returns (bytes4) {
         if (msg.sender != ticketToken) {
-            require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
-            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit: wrong prize token ", addr2str(msg.sender))));
-            require(owner == from, "Deposit: Depositor is not raffle owner");
+            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit ERC721: wrong prize token ", addr2str(msg.sender))));
+            require(owner == from, "Deposit ERC721: Depositor is not raffle owner");
             prizeERC721[msg.sender].push(tokenId);    // record the deposit
         }
         return this.onERC721Received.selector;        // must return this value. See ERC721._checkOnERC721Received()
@@ -100,29 +101,24 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * NOTE: We must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted
      * NOTE2: We could also add a password provided by a Ticket depositor, so the hash will consist of (owner address + ticket number + password)
      */
-    function onTicketReceived(address from, bytes32 hash)
-      public returns (bytes4) {
-        require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
-        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit: wrong ticket token ", addr2str(msg.sender))));
-        playerToHash[from] = hash;                // record the deposit
-        return this.onTicketReceived.selector;    // must return this value. See Ticket._checkOnTicketReceived()
+    function onTicketReceived(address from, bytes32 hash) onlyFirstRound public returns (bytes4) {
+        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", addr2str(msg.sender))));
+        playerToHash[from] = hash;                    // record the deposit
+        return this.onTicketReceived.selector;        // must return this value. See Ticket._checkOnTicketReceived()
     }
 
 
-    function runSecondRound() public onlyOwner {
-        require(state == LotteryState.FirstRound);
+    function runSecondRound() public onlyOwner onlyFirstRound {
         state = LotteryState.SecondRound;
     }
     
-    function claimTickets(uint256 number) public {
-        require(state == LotteryState.SecondRound, "Claim: not allowed in this round");
-        require(keccak256(abi.encodePacked(msg.sender, number)) == playerToHash[msg.sender], "Claim: wrong hash");
+    function claimTicket(uint256 number) public onlySecondRound {
+        require(keccak256(abi.encodePacked(msg.sender, number)) == playerToHash[msg.sender], "Claim Ticket: wrong hash");
         numberToPlayer[number] = msg.sender;
         numbers.push(number);
     }
 
-    function execute() public onlyOwner {
-        require(state == LotteryState.SecondRound);  // allow raffle execution in the second round only
+    function execute() public onlyOwner onlySecondRound {
         state = LotteryState.Finished;
 
         uint256 seedNumberIndex = 0;
