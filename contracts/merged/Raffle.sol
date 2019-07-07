@@ -149,7 +149,7 @@ contract Owned {
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Sender is not owner");
         _;
     }
 
@@ -312,7 +312,9 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     uint256[] public winningNumbers;
     address public winner;
 
+    // token address to amount of tokens
     mapping (address => uint256)   public prizeERC20;
+    // token address to array of token ids
     mapping (address => uint256[]) public prizeERC721;
 
     enum LotteryState { FirstRound, SecondRound, Finished }
@@ -344,7 +346,8 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by someone who wants to deposit Ether to this contract
      *
      */
-    function depositEther() public payable {
+    function depositEther()
+      public payable onlyOwner {
         require(state == LotteryState.FirstRound);            // allow deposits in the first round only
         require(prizeEtherAllowed);                           // check ether allowed as a prize token
         require(owner == msg.sender);                         // accept deposits from owner's account only
@@ -355,7 +358,8 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by someone who approved ERC20 tokens to this contract, if the ERC20 token does not notify this contract itself
      *
      */
-    function depositERC20(address token, uint256 value) public onlyOwner {
+    function depositERC20(address token, uint256 value)
+      public onlyOwner {
         require(state == LotteryState.FirstRound);            // allow deposits in the first round only
         require(isPrizeToken(token));                         // check deposited token is one of prize tokens
         require(owner == msg.sender);                         // accept deposits from owner's account only
@@ -367,7 +371,8 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by ERC20 token contracts, when someone sends such a token to this contract
      *
      */
-    function receiveApproval(address from, uint256 value, address token, bytes memory data) public onlyOwner {
+    function receiveApproval(address from, uint256 value, address token, bytes memory data)
+      public {
         require(state == LotteryState.FirstRound);            // allow deposits in the first round only
         require(isPrizeToken(token));                         // check deposited token is one of prize tokens
         require(owner == from);                               // accept deposits from owner's account only
@@ -378,19 +383,21 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by ERC721 token contracts, when someone sends such a token to this contract
      *
      */
-    function onERC721Received(address token, address from, uint256 tokenId, bytes memory data) public onlyOwner returns (bytes4) {
-        require(state == LotteryState.FirstRound);            // allow deposits in the first round only
-        require(isPrizeToken(token));                         // check deposited token is one of prize tokens
-        require(owner == from);                               // accept deposits from owner's account only
-        prizeERC721[token].push(tokenId);                     // record the deposit
-        return this.onERC721Received.selector;                // must return this value. See ERC721._checkOnERC721Received()
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
+      public returns (bytes4) {
+        require(state == LotteryState.FirstRound, "Deposite: Not allowed in this round");
+        require(isPrizeToken(msg.sender),          string(abi.encodePacked("Deposite: Wrong prize token ", addr2str(msg.sender))));
+        require(owner == from,                    "Deposite: Depositor is not raffle owner");
+        prizeERC721[msg.sender].push(tokenId);    // record the deposit
+        return this.onERC721Received.selector;    // must return this value. See ERC721._checkOnERC721Received()
     }
 
     /**
      * Called by Ticket token contracts, when someone sends such a Ticket to this contract
      * NOTE: we must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted 
      */
-    function onTicketReceived(address token, bytes32 hash) public returns (bytes4) {
+    function onTicketReceived(address token, bytes32 hash)
+      public returns (bytes4) {
         require(state == LotteryState.FirstRound);            // allow ticket deposits in the first round only
         require(token == ticketToken);                        // check deposited ticket can be used in this raffle
         playerToHash[msg.sender] = hash;                      // record that the player deposited the ticket to the raffle
@@ -445,13 +452,34 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         }
         return seed % numbers.length;
     }
-    function bytesToBytes32(bytes memory b, uint offset) private pure returns (bytes32) {
+
+    function bytes2bytes32(bytes memory b, uint offset) private pure returns (bytes32) {
         bytes32 out;
         for (uint i = 0; i < 32; i++) {
             out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
         }
         return out;
     }
+
+    function uint2str(uint _i) private pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (_i != 0) {
+            bstr[k--] = byte(uint8(48 + _i % 10));
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
     function isPrizeToken(address a) private view returns (bool) {
         for (uint256 i = 0; i < prizeTokens.length; i++) {
             if (a == prizeTokens[i]) {
@@ -459,6 +487,20 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
             }
         }
         return false;
+    }
+
+    function addr2str(address _addr) private pure returns(string memory) {
+        bytes32 value = bytes32(uint256(_addr));
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(42);
+        str[0] = '0';
+        str[1] = 'x';
+        for (uint i = 0; i < 20; i++) {
+            str[2+i*2] = alphabet[uint(uint8(value[i + 12] >> 4))];
+            str[3+i*2] = alphabet[uint(uint8(value[i + 12] & 0x0f))];
+        }
+        return string(str);
     }
 
     function setName(string memory _name) onlyOwner public {

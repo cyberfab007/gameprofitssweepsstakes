@@ -9,7 +9,7 @@ contract Owned {
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Sender is not owner");
         _;
     }
 
