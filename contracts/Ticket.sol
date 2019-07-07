@@ -57,7 +57,7 @@ contract Ticket is Owned, ERC721Full {
         if (!spender.isContract()) return true;
         bytes32 hash = keccak256(abi.encodePacked(msg.sender, tokenId));
         ITicketReceiver ticketReceiver = ITicketReceiver(spender);
-        bytes4 retval = ticketReceiver.onTicketReceived(address(this), hash);
+        bytes4 retval = ticketReceiver.onTicketReceived(msg.sender, hash);
         return (retval == ticketReceiver.onTicketReceived.selector);
     }
 

@@ -1038,11 +1038,11 @@ contract ITicketReceiver {
      * otherwise the caller will revert the transaction. The selector to be
      * returned can be obtained as `this.onTicketReceived.selector`. This
      * function MAY throw to revert and reject the transfer.
-     * @param operator Address of the Ticket contract (which called this function)
+     * @param from The address which previously owned the token
      * @param hash Keccak256 hash of the NFT sender and its identifier
-     * @return bytes4 `bytes4(keccak256("onTicketReceived(address,bytes32)"))`
+     * @return bytes4 `bytes4(keccak256("onTicketReceived(bytes32)"))`
      */
-    function onTicketReceived(address operator, bytes32 hash) public returns (bytes4);
+    function onTicketReceived(address from, bytes32 hash) public returns (bytes4);
 }
 
 contract Ticket is Owned, ERC721Full {
@@ -1098,7 +1098,7 @@ contract Ticket is Owned, ERC721Full {
         if (!spender.isContract()) return true;
         bytes32 hash = keccak256(abi.encodePacked(msg.sender, tokenId));
         ITicketReceiver ticketReceiver = ITicketReceiver(spender);
-        bytes4 retval = ticketReceiver.onTicketReceived(address(this), hash);
+        bytes4 retval = ticketReceiver.onTicketReceived(msg.sender, hash);
         return (retval == ticketReceiver.onTicketReceived.selector);
     }
 

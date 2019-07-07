@@ -285,11 +285,11 @@ contract ITicketReceiver {
      * otherwise the caller will revert the transaction. The selector to be
      * returned can be obtained as `this.onTicketReceived.selector`. This
      * function MAY throw to revert and reject the transfer.
-     * @param operator Address of the Ticket contract (which called this function)
+     * @param from The address which previously owned the token
      * @param hash Keccak256 hash of the NFT sender and its identifier
-     * @return bytes4 `bytes4(keccak256("onTicketReceived(address,bytes32)"))`
+     * @return bytes4 `bytes4(keccak256("onTicketReceived(bytes32)"))`
      */
-    function onTicketReceived(address operator, bytes32 hash) public returns (bytes4);
+    function onTicketReceived(address from, bytes32 hash) public returns (bytes4);
 }
 
 contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
@@ -385,10 +385,12 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
       public returns (bytes4) {
-        require(state == LotteryState.FirstRound, "Deposite: Not allowed in this round");
-        require(isPrizeToken(msg.sender),          string(abi.encodePacked("Deposite: Wrong prize token ", addr2str(msg.sender))));
-        require(owner == from,                    "Deposite: Depositor is not raffle owner");
-        prizeERC721[msg.sender].push(tokenId);    // record the deposit
+        if (msg.sender != ticketToken) {
+            require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
+            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit: wrong prize token ", addr2str(msg.sender))));
+            require(owner == from, "Deposite: Depositor is not raffle owner");
+            prizeERC721[msg.sender].push(tokenId);    // record the deposit
+        }
         return this.onERC721Received.selector;    // must return this value. See ERC721._checkOnERC721Received()
     }
 
@@ -396,12 +398,12 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by Ticket token contracts, when someone sends such a Ticket to this contract
      * NOTE: we must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted 
      */
-    function onTicketReceived(address token, bytes32 hash)
+    function onTicketReceived(address from, bytes32 hash)
       public returns (bytes4) {
-        require(state == LotteryState.FirstRound);            // allow ticket deposits in the first round only
-        require(token == ticketToken);                        // check deposited ticket can be used in this raffle
-        playerToHash[msg.sender] = hash;                      // record that the player deposited the ticket to the raffle
-        return this.onTicketReceived.selector;                // must return this value. See ERC721._checkOnERC721Received()
+        require(state == LotteryState.FirstRound, "Deposit: not allowed in this round");
+        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit: wrong ticket token ", addr2str(msg.sender))));
+        playerToHash[from] = hash;          // record that the player deposited the ticket to the raffle
+        return this.onTicketReceived.selector;    // must return this value. See ERC721._checkOnERC721Received()
     }
 
 
@@ -411,8 +413,8 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     }
     
     function claimTickets(uint256 number) public {
-        require(state == LotteryState.SecondRound);                                     // allow claiming ticket numbers in the second round only
-        require(keccak256(abi.encode(number, msg.sender)) == playerToHash[msg.sender]); // check msg.sender submitted the number in the first number
+        require(state == LotteryState.SecondRound, "Claim: not allowed in this round");
+        require(keccak256(abi.encodePacked(msg.sender, number)) == playerToHash[msg.sender], "Claim: wrong hash");
         numberToPlayer[number] = msg.sender;
         numbers.push(number);
     }
