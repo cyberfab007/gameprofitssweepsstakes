@@ -13,8 +13,7 @@ import "./ITicketReceiver.sol";
 
 /**
  * @author Aliaksandr Adzinets
- * @title A raffle that works on ERC721-based tickets and 
- *        allows prizes in ERC20, ERC721 and AdvancedTokens
+ * @title A raffle that works on ERC721-based tickets and allows prizes in ETH, ERC20, ERC721 and AdvancedTokens
  */
 contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
@@ -89,10 +88,8 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     uint256[] public numbers;
 
     /**
-     * It is more robust to define several winning numbers,
-     * because in case if the first one belongs to a person 
-     * who is not eligible for prize receival,
-     * we can give it to the next one, etc.
+     * It is more robust to define several winning numbers, because in case if the first one belongs to 
+     * a person who is not eligible for prize receival, we can give away the prize to the next one, etc.
      */
     uint8 constant private winnersLengthMax = 10;
     address[] public winners;
@@ -158,10 +155,11 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
     /**
      * Called by ERC20 token contracts, when someone deposits such a token to this contract
-     * NOTE: If some ERC20 token contract doesn't implement calling this method, the depositor must call it manually 
+     * NOTE: If some ERC20 token contract doesn't implement calling this method, the depositor must call it manually
      */
     function receiveApproval(address from, uint256 value, address token, bytes memory data) public onlyFirstRound {
-        require(isPrizeToken(token), string(abi.encodePacked("Deposit ERC20: wrong prize token ", Util.addr2str(msg.sender))));
+        require(isPrizeToken(token), 
+          string(abi.encodePacked("Deposit ERC20: wrong prize token ", Util.addr2str(msg.sender))));
         require(owner == from, "Deposit ERC20: Depositor is not raffle owner");
         prizeERC20[token] += value;                   // record the deposit
     }
@@ -170,9 +168,11 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * Called by ERC721 token contracts, when someone deposits such a token to this contract
      *
      */
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data) public onlyFirstRound returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data) 
+      public onlyFirstRound returns (bytes4) {
         if (msg.sender != ticketToken) {
-            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit ERC721: wrong prize token ", Util.addr2str(msg.sender))));
+            require(isPrizeToken(msg.sender), 
+              string(abi.encodePacked("Deposit ERC721: wrong prize token ", Util.addr2str(msg.sender))));
             require(owner == from, "Deposit ERC721: Depositor is not raffle owner");
             prizeERC721[msg.sender].push(tokenId);    // record the deposit
         }
@@ -181,11 +181,14 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
     /**
      * Called by Ticket token contracts, when someone deposits such a Ticket to this contract
-     * NOTE: We must not reveal the token sender address and the token id at this step - they are passed in as a hash, packed and encrypted
-     * NOTE2: We could also add a password provided by a Ticket depositor, so the hash will consist of (owner address + ticket number + password)
+     * NOTE : We must not reveal the token sender address and the token id at this step - 
+              They are passed in as a hash, packed and encrypted
+     * NOTE2: We could also add a password provided by a Ticket depositor, so the hash will consist of 
+              (owner address + ticket number + password)
      */
     function onTicketReceived(address from, bytes32 hash) onlyFirstRound public returns (bytes4) {
-        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", Util.addr2str(msg.sender))));
+        require(msg.sender == ticketToken, 
+          string(abi.encodePacked("Deposit Ticket: wrong ticket token ", Util.addr2str(msg.sender))));
         if (depositLimit > 0) {
             require(playerToHashes[from].length < depositLimit, "Deposit Ticket: depositLimit reached");
         }
