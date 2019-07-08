@@ -14,14 +14,51 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     using Address for address;
     using Counters for Counters.Counter;
 
+    /**
+     * The name of the raffle
+     */
     string    public name;
+
+    /**
+     * Ethereum addresses of the ticket token contract
+     */
     address   public ticketToken;
+
+    /**
+     * Ethereum addresses of the prize token contracts
+     */
     address[] public prizeTokens;
+
+    /**
+     * Whether ETH deposits allowed to this raffle or not
+     */
     bool      public prizeEtherAllowed;
+
+    /**
+     * The max number of tickets that one player is allowed to pledge
+     * NOTE: if set to 0 there is no deposit limit
+     */
     uint256   public depositLimit;
+
+    /**
+     * The amount of tickets that must be pledged before the raffle can be executed
+     * NOTE: If set to 0, use exec_timestamp condition; otherwise use exec_delay condition
+     */ 
     uint256   public execLimit;
+
+    /**
+     * A UNIX timestamp (in seconds), representing datetime after which the raffle can be executed
+     */ 
     uint32    public execTimestamp;
+
+    /**
+     * The delay (in seconds) after exec_limit reached and before the raffle can be executed.
+     */  
     uint32    public execDelay;
+
+    /**
+     * The name of the sponsor
+     */
     string    public sponsoredBy;
 
 
