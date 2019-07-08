@@ -26,7 +26,7 @@ module.exports = function(deployer) {
                     return deployer.deploy(ERC20, 1000000, "ERC-20 Standard", "ERC20").then(instance => {
                         erc20 = instance
                         prizeTokens.push(erc20.address)
-                        return deployer.deploy(Raffle, "My First Raffle", ticket.address, prizeTokens, true, 101, 102, 103, 104, "Our Good Sponsor").then(instance => {
+                        return deployer.deploy(Raffle, "My First Raffle", ticket.address, prizeTokens, true, 101, 4, 1562620000, 1, "Our Good Sponsor").then(instance => {
                             raffle = instance
                         })                 
                     })

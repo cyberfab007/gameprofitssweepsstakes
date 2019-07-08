@@ -47,6 +47,11 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     uint256   public execLimit;
 
     /**
+     * A UNIX timestamp (in seconds), representing datetime when execLimit reached
+     */ 
+    uint256   public execLimitTimestamp;
+
+    /**
      * A UNIX timestamp (in seconds), representing datetime after which the raffle can be executed
      */ 
     uint32    public execTimestamp;
@@ -176,9 +181,18 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         require(keccak256(abi.encodePacked(msg.sender, number)) == playerToHash[msg.sender], "Claim Ticket: wrong hash");
         numberToPlayer[number] = msg.sender;
         numbers.push(number);
+        if (execLimit > 0 && numbers.length == execLimit) {
+            execLimitTimestamp = now;
+        }
     }
 
     function execute() public onlyOwner onlySecondRound {
+        if (execLimit > 0) {
+            require(execLimitTimestamp > 0, "Execution not allowed: execLimit is not reached yet");
+            require(now >= (execLimitTimestamp + execDelay), "Execution not allowed: execDelay is not reached yet");
+        } else {
+            require(now >= execTimestamp, "Execution not allowed: execTimestamp is not reached yet");
+        }
         state = LotteryState.Finished;
         uint256 winningNumbersLength = numbers.length > winningNumbersLengthMax ? winningNumbersLengthMax : numbers.length;
         uint256 seedNumberIndex = 0;
@@ -238,6 +252,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         name = _name;
     }
     function setTicketToken(address _ticketToken) onlyOwner public {
+        require(_ticketToken != address(0), "_ticketToken == address(0)");
         ticketToken = _ticketToken;
     }
     function setPrizeTokens(address[] memory _prizeTokens) onlyOwner public {
@@ -247,15 +262,19 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         prizeEtherAllowed = _prizeEtherAllowed;
     }
     function setDepositLimit(uint256 _depositLimit) onlyOwner public {
+        require(_depositLimit >= 0, "depositLimit < 0");
         depositLimit = _depositLimit;
     }
     function setExecLimit(uint256 _execLimit) onlyOwner public {
+        require(_execLimit >= 0, "execLimit < 0");
         execLimit = _execLimit;
     }
     function setExecTimestamp(uint32 _execTimestamp) onlyOwner public {
+        require(_execTimestamp > now, "execTimestamp <= now");
         execTimestamp = _execTimestamp;
     }
     function setExecDelay(uint32 _execDelay) onlyOwner public {
+        require(_execDelay >= 0, "execDelay < 0");
         execDelay = _execDelay;
     }
     function setSponsoredBy(string memory _sponsoredBy) onlyOwner public {
