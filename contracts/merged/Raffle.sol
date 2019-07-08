@@ -498,7 +498,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     string    public sponsoredBy;
 
 
-    mapping (address => bytes32) playerToHash;
+    mapping (address => bytes32[]) playerToHashes;
 
     mapping (uint256 => address) numberToPlayer;
 
@@ -599,7 +599,10 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     function onTicketReceived(address from, bytes32 hash) onlyFirstRound public returns (bytes4) {
         require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", Util.addr2str(msg.sender))));
-        playerToHash[from] = hash;                    // record the deposit
+        //if (depositLimit > 0) {
+            require(playerToHashes[from].length < depositLimit, "Deposit Ticket: depositLimit reached");
+        //}
+        playerToHashes[from].push(hash);              // record the deposit
         return this.onTicketReceived.selector;        // must return this value. See Ticket._checkOnTicketReceived()
     }
 
@@ -609,7 +612,14 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     }
     
     function claimTicket(uint256 number) public onlySecondRound {
-        require(keccak256(abi.encodePacked(msg.sender, number)) == playerToHash[msg.sender], "Claim Ticket: wrong hash");
+        bool hashExists;
+        for (uint256 i = 0; i < playerToHashes[msg.sender].length; i++) {
+            if (keccak256(abi.encodePacked(msg.sender, number)) == playerToHashes[msg.sender][i]) {
+                hashExists = true;
+                break;
+            }
+        }
+        require(hashExists, "Claim Ticket: wrong hash");
         numberToPlayer[number] = msg.sender;
         numbers.push(number);
         if (execLimit > 0 && numbers.length == execLimit) {
@@ -701,7 +711,11 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         execLimit = _execLimit;
     }
     function setExecTimestamp(uint32 _execTimestamp) onlyOwner public {
-        require(_execTimestamp > now, "execTimestamp <= now");
+        if (execLimit > 0) {
+            require(_execTimestamp == 0, "execTimestamp != 0 when execLimit > 0");
+        } else {
+            require(_execTimestamp > now, "execTimestamp <= now when execLimit !> 0");
+        }
         execTimestamp = _execTimestamp;
     }
     function setExecDelay(uint32 _execDelay) onlyOwner public {
