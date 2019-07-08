@@ -9,7 +9,7 @@ contract("Raffle Test", accounts => {
 
     /** DEPOSIT ETH **/
 
-    it("should depositEther() 1234567890 wei from 0 to Raffle, and check receival via address.balance", () => {
+    it("should depositEther() 1234567890 wei from [0] to Raffle, and check receival via address.balance", () => {
         let deployed;
         return Raffle.deployed()
           .then(instance => {
@@ -22,7 +22,7 @@ contract("Raffle Test", accounts => {
 
     /** DEPOSIT ERC20 **/
 
-    it("should approve() and transferFrom() 10000000000 ERC20 from 0 to 5", () => {
+    it("should approve() and transferFrom() 10000000000 ERC20 from [0] to [5]", () => {
         let deployed;
         return ERC20.deployed()
           .then(instance => {
@@ -39,7 +39,7 @@ contract("Raffle Test", accounts => {
           .then(() => deployed.transferFrom.sendTransaction(accounts[0], accounts[5],  4000000000, {from: accounts[5]}))
     })
 
-    it("should approve() 77000009333 ERC20 from 0 to Raffle, then receiveApproval() on Raffle as 0, and check receival via prizeERC20()", () => {
+    it("should approve() 77000009333 ERC20 from [0] to Raffle, then receiveApproval() on Raffle as [0], and check receival via prizeERC20()", () => {
         let erc20, raffle;
         return ERC20.deployed()
           .then(instance => {
@@ -57,7 +57,7 @@ contract("Raffle Test", accounts => {
 
     /** DEPOSIT ADV **/
 
-    it("should approveAndCall() and transferFrom() 10000000000 ADV from 0 to 5", () => {
+    it("should approveAndCall() and transferFrom() 10000000000 ADV from [0] to [5]", () => {
         let deployed;
         return AdvancedToken.deployed()
           .then(instance => {
@@ -74,7 +74,7 @@ contract("Raffle Test", accounts => {
           .then(() => deployed.transferFrom.sendTransaction(accounts[0], accounts[5],  5000000000, {from: accounts[5]}))
     })
 
-    it("should approveAndCall() 23000001111 ADV from 0 to Raffle, and check receival via prizeERC20()", () => {
+    it("should approveAndCall() 23000001111 ADV from [0] to Raffle, and check receival via prizeERC20()", () => {
         let adv, raffle;
         return AdvancedToken.deployed()
           .then(instance => {
@@ -91,7 +91,7 @@ contract("Raffle Test", accounts => {
 
     /** DEPOSIT ERC721 **/
 
-    it("should mint() ERC721 token #888 for 0", () => {
+    it("should mint() ERC721 token #888 for [0]", () => {
         let deployed;
         return ERC721.deployed()
           .then(instance => {
@@ -104,7 +104,7 @@ contract("Raffle Test", accounts => {
           .then(owner => assert.equal(owner, accounts[0], "Wrong owner"))
     })
 
-    it("should safeTransferFrom() ERC721 #888 from 0 to Raffle, and check receival via prizeERC721()", () => {
+    it("should safeTransferFrom() ERC721 #888 from [0] to Raffle, and check receival via prizeERC721()", () => {
         let erc721, raffle;
         return ERC721.deployed()
           .then(instance => {
@@ -194,7 +194,7 @@ contract("Raffle Test", accounts => {
 
     /** EXECUTE RAFFLE **/
 
-    it("should execute() and check that 2 is winner()", () => {
+    it("should execute() and check that [2] is winner(), also verifying Raffle and [2] balances before and after execution", () => {
         let erc721, erc20, adv, raffle, raffleOwner,
             initBalanceRaffleERC20, initBalanceRaffleADV, initBalanceRaffleERC721, initBalanceRaffleETH,
             initBalanceWinnerERC20, initBalanceWinnerADV, initBalanceWinnerERC721, initBalanceWinnerETH,
