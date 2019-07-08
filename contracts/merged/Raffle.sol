@@ -441,7 +441,13 @@ contract ITicketReceiver {
     function onTicketReceived(address from, bytes32 hash) public returns (bytes4);
 }
 
+/**
+ * @author Aliaksandr Adzinets
+ * @title A raffle that works on ERC721-based tickets and 
+ *        allows prizes in ERC20, ERC721 and AdvancedTokens
+ */
 contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
+
     using Address for address;
     using Counters for Counters.Counter;
 
@@ -523,32 +529,28 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
     uint256[] public winningNumbers;
     address public winner;
 
-
-    // prize token address to amount of prize tokens
+    /**
+     * Prize token address to amount of prize tokens
+     */
     mapping (address => uint256)   public prizeERC20;
 
-    // prize token address to array of prize token ids
+    /**
+     * Prize token address to array of prize token ids
+     */
     mapping (address => uint256[]) public prizeERC721;
 
 
     enum LotteryState { FirstRound, SecondRound, Finished }
-
     LotteryState state;
 
     modifier onlyFirstRound {
         require(state == LotteryState.FirstRound, "Allowed in the 1st round only");
         _;
     }
-
     modifier onlySecondRound {
         require(state == LotteryState.SecondRound, "Allowed in the 2nd round only");
         _;
     }
-
-
-
-
-    event LogERC20Allowance(address from, address to, uint256 value);
 
 
     constructor(
@@ -668,9 +670,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         for (uint256 i = 0; i < prizeTokens.length; i++) {
             if (prizeERC20[prizeTokens[i]] > 0) {
                 IERC20 token = IERC20(prizeTokens[i]);
-                uint256 allowance = token.allowance(owner, address(this));
-                emit LogERC20Allowance(owner, address(this), allowance);
-                token.transferFrom(owner, winner, allowance);
+                token.transferFrom(owner, winner, token.allowance(owner, address(this)));
             }
             if (prizeERC721[prizeTokens[i]].length > 0) {
                 IERC721 token = IERC721(prizeTokens[i]);
