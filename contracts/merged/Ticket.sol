@@ -92,9 +92,9 @@ contract ERC165 is IERC165 {
  * @dev Required interface of an ERC721 compliant contract.
  */
 contract IERC721 is IERC165 {
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    event Transfer721(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval721(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event ApprovalForAll721(address indexed owner, address indexed operator, bool approved);
 
     /**
      * @dev Returns the number of NFTs in `owner`'s account.
@@ -162,6 +162,50 @@ contract IERC721Receiver {
     public returns (bytes4);
 }
 
+library Util {
+
+    function bytes2bytes32(bytes memory arg, uint offset) public pure returns (bytes32) {
+        bytes32 out;
+        for (uint i = 0; i < 32; i++) {
+            out |= bytes32(arg[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
+    function uint2str(uint arg) public pure returns (string memory) {
+        if (arg == 0) {
+            return "0";
+        }
+        uint j = arg;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (arg != 0) {
+            bstr[k--] = byte(uint8(48 + arg % 10));
+            arg /= 10;
+        }
+        return string(bstr);
+    }
+
+    function addr2str(address arg) public pure returns (string memory) {
+        bytes32 value = bytes32(uint256(arg));
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(42);
+        str[0] = '0';
+        str[1] = 'x';
+        for (uint i = 0; i < 20; i++) {
+            str[2+i*2] = alphabet[uint(uint8(value[i + 12] >> 4))];
+            str[3+i*2] = alphabet[uint(uint8(value[i + 12] & 0x0f))];
+        }
+        return string(str);
+    }
+}
+
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
  * checks.
@@ -202,7 +246,7 @@ library SafeMath {
      * - Subtraction cannot overflow.
      */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "SafeMath: subtraction overflow");
+        require(b <= a, string(abi.encodePacked("SafeMath: subtraction overflow: ", Util.uint2str(a), " - ", Util.uint2str(b))));
         uint256 c = a - b;
 
         return c;
@@ -422,7 +466,7 @@ contract ERC721 is ERC165, IERC721 {
         );
 
         _tokenApprovals[tokenId] = to;
-        emit Approval(owner, to, tokenId);
+        emit Approval721(owner, to, tokenId);
     }
 
     /**
@@ -447,7 +491,7 @@ contract ERC721 is ERC165, IERC721 {
         require(to != msg.sender, "ERC721: approve to caller");
 
         _operatorApprovals[msg.sender][to] = approved;
-        emit ApprovalForAll(msg.sender, to, approved);
+        emit ApprovalForAll721(msg.sender, to, approved);
     }
 
     /**
@@ -543,7 +587,7 @@ contract ERC721 is ERC165, IERC721 {
         _tokenOwner[tokenId] = to;
         _ownedTokensCount[to].increment();
 
-        emit Transfer(address(0), to, tokenId);
+        emit Transfer721(address(0), to, tokenId);
     }
 
     /**
@@ -561,7 +605,7 @@ contract ERC721 is ERC165, IERC721 {
         _ownedTokensCount[owner].decrement();
         _tokenOwner[tokenId] = address(0);
 
-        emit Transfer(owner, address(0), tokenId);
+        emit Transfer721(owner, address(0), tokenId);
     }
 
     /**
@@ -591,7 +635,7 @@ contract ERC721 is ERC165, IERC721 {
 
         _tokenOwner[tokenId] = to;
 
-        emit Transfer(from, to, tokenId);
+        emit Transfer721(from, to, tokenId);
     }
 
     /**

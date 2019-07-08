@@ -1,14 +1,17 @@
 pragma solidity >=0.4.22 <0.6.0;
 
+import "./Address.sol";
 import "./Counters.sol";
 import "./Owned.sol";
+import "./Util.sol";
 import "./IERC20.sol";
+import "./IERC721.sol";
 import "./IExtERC20Receiver.sol";
 import "./IERC721Receiver.sol";
 import "./ITicketReceiver.sol";
 
 contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
-
+    using Address for address;
     using Counters for Counters.Counter;
 
     string    public name;
@@ -54,6 +57,11 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         _;
     }
 
+    uint256 constant private winningNumbersLengthMax = 10;
+
+
+    event LogERC20Allowance(address from, address to, uint256 value);
+
 
     constructor(
           string    memory _name,
@@ -93,7 +101,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * NOTE: If some ERC20 token contract doesn't implement calling this method, the depositor must call it manually 
      */
     function receiveApproval(address from, uint256 value, address token, bytes memory data) public onlyFirstRound {
-        require(isPrizeToken(token), string(abi.encodePacked("Deposit ERC20: wrong prize token ", addr2str(msg.sender))));
+        require(isPrizeToken(token), string(abi.encodePacked("Deposit ERC20: wrong prize token ", Util.addr2str(msg.sender))));
         require(owner == from, "Deposit ERC20: Depositor is not raffle owner");
         prizeERC20[token] += value;                   // record the deposit
     }
@@ -104,7 +112,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data) public onlyFirstRound returns (bytes4) {
         if (msg.sender != ticketToken) {
-            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit ERC721: wrong prize token ", addr2str(msg.sender))));
+            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit ERC721: wrong prize token ", Util.addr2str(msg.sender))));
             require(owner == from, "Deposit ERC721: Depositor is not raffle owner");
             prizeERC721[msg.sender].push(tokenId);    // record the deposit
         }
@@ -117,7 +125,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * NOTE2: We could also add a password provided by a Ticket depositor, so the hash will consist of (owner address + ticket number + password)
      */
     function onTicketReceived(address from, bytes32 hash) onlyFirstRound public returns (bytes4) {
-        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", addr2str(msg.sender))));
+        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", Util.addr2str(msg.sender))));
         playerToHash[from] = hash;                    // record the deposit
         return this.onTicketReceived.selector;        // must return this value. See Ticket._checkOnTicketReceived()
     }
@@ -135,29 +143,41 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
     function execute() public onlyOwner onlySecondRound {
         state = LotteryState.Finished;
-
+        uint256 winningNumbersLength = numbers.length > winningNumbersLengthMax ? winningNumbersLengthMax : numbers.length;
         uint256 seedNumberIndex = 0;
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < winningNumbersLength; i++) {
             uint256 randomNumber = numbers[getRandomNumberIndex(seedNumberIndex)];
             seedNumberIndex = winningNumbers.push(randomNumber);
         }
-        
         verifyWinner();
     }
 
     function verifyWinner() private {
         for (uint256 i = 0; i < winningNumbers.length; i++) {
             winner = numberToPlayer[winningNumbers[i]];
-            // TODO verification
-            if (winner != address(0)) {
-                break;
-            }
+            if (winner != address(0)) break;
         }
-        distributeFunds();
+        giveAwayPrize();
     }
 
-    function distributeFunds() private {
-        // TODO
+    function giveAwayPrize() private {
+        if (prizeEtherAllowed && address(this).balance > 0) {
+            winner.toPayable().transfer(address(this).balance);
+        }
+        for (uint256 i = 0; i < prizeTokens.length; i++) {
+            if (prizeERC20[prizeTokens[i]] > 0) {
+                IERC20 token = IERC20(prizeTokens[i]);
+                uint256 allowance = token.allowance(owner, address(this));
+                emit LogERC20Allowance(owner, address(this), allowance);
+                token.transferFrom(owner, winner, allowance);
+            }
+            if (prizeERC721[prizeTokens[i]].length > 0) {
+                IERC721 token = IERC721(prizeTokens[i]);
+                for (uint256 j = 0; j < prizeERC721[prizeTokens[i]].length; j++) {
+                    token.safeTransferFrom(address(this), winner, prizeERC721[prizeTokens[i]][j]); 
+                }               
+            }
+        }
     }
 
     function getRandomNumberIndex(uint256 seedNumberIndex) private view returns (uint256) {
@@ -168,33 +188,6 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         return seed % numbers.length;
     }
 
-    function bytes2bytes32(bytes memory b, uint offset) private pure returns (bytes32) {
-        bytes32 out;
-        for (uint i = 0; i < 32; i++) {
-            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
-        }
-        return out;
-    }
-
-    function uint2str(uint _i) private pure returns (string memory) {
-        if (_i == 0) {
-            return "0";
-        }
-        uint j = _i;
-        uint len;
-        while (j != 0) {
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        while (_i != 0) {
-            bstr[k--] = byte(uint8(48 + _i % 10));
-            _i /= 10;
-        }
-        return string(bstr);
-    }
-
     function isPrizeToken(address a) private view returns (bool) {
         for (uint256 i = 0; i < prizeTokens.length; i++) {
             if (a == prizeTokens[i]) {
@@ -202,20 +195,6 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
             }
         }
         return false;
-    }
-
-    function addr2str(address _addr) private pure returns(string memory) {
-        bytes32 value = bytes32(uint256(_addr));
-        bytes memory alphabet = "0123456789abcdef";
-
-        bytes memory str = new bytes(42);
-        str[0] = '0';
-        str[1] = 'x';
-        for (uint i = 0; i < 20; i++) {
-            str[2+i*2] = alphabet[uint(uint8(value[i + 12] >> 4))];
-            str[3+i*2] = alphabet[uint(uint8(value[i + 12] & 0x0f))];
-        }
-        return string(str);
     }
 
     function setName(string memory _name) onlyOwner public {

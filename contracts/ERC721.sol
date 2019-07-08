@@ -93,7 +93,7 @@ contract ERC721 is ERC165, IERC721 {
         );
 
         _tokenApprovals[tokenId] = to;
-        emit Approval(owner, to, tokenId);
+        emit Approval721(owner, to, tokenId);
     }
 
     /**
@@ -118,7 +118,7 @@ contract ERC721 is ERC165, IERC721 {
         require(to != msg.sender, "ERC721: approve to caller");
 
         _operatorApprovals[msg.sender][to] = approved;
-        emit ApprovalForAll(msg.sender, to, approved);
+        emit ApprovalForAll721(msg.sender, to, approved);
     }
 
     /**
@@ -214,7 +214,7 @@ contract ERC721 is ERC165, IERC721 {
         _tokenOwner[tokenId] = to;
         _ownedTokensCount[to].increment();
 
-        emit Transfer(address(0), to, tokenId);
+        emit Transfer721(address(0), to, tokenId);
     }
 
     /**
@@ -232,7 +232,7 @@ contract ERC721 is ERC165, IERC721 {
         _ownedTokensCount[owner].decrement();
         _tokenOwner[tokenId] = address(0);
 
-        emit Transfer(owner, address(0), tokenId);
+        emit Transfer721(owner, address(0), tokenId);
     }
 
     /**
@@ -262,7 +262,7 @@ contract ERC721 is ERC165, IERC721 {
 
         _tokenOwner[tokenId] = to;
 
-        emit Transfer(from, to, tokenId);
+        emit Transfer721(from, to, tokenId);
     }
 
     /**

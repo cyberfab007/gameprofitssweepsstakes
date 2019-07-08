@@ -5,6 +5,7 @@ import "./IERC20.sol";
 import "./IExtERC20Receiver.sol";
 import "./Owned.sol";
 import "./Address.sol";
+import "./Util.sol";
 
 contract ExtERC20 is IERC20 {
     using Address for address;
@@ -49,11 +50,11 @@ contract ExtERC20 is IERC20 {
      */
     function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != address(0x0));
+        require(_to != address(0x0), "R01");
         // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
+        require(balanceOf[_from] >= _value, "R02");
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to], "R03");
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
@@ -88,8 +89,14 @@ contract ExtERC20 is IERC20 {
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][_to]);     // Check allowance
-        allowance[_from][_to] -= _value;
+        string memory sender = Util.addr2str(msg.sender);
+        string memory from   = Util.addr2str(_from);
+        string memory to     = Util.addr2str(_to);
+        string memory allv   = Util.uint2str(allowance[_from][msg.sender]);
+        string memory reqv   = Util.uint2str(_value);
+        require(_value <= allowance[_from][msg.sender],  // Check allowance     
+          string(abi.encodePacked("ExtERC20.transferFrom(): allowance from ", from, " to ", sender, " = ", allv, " is not enough, requested ", reqv)));     
+        allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
@@ -187,11 +194,11 @@ contract AdvancedToken is Owned, ExtERC20 {
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != address(0x0));                          // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);                   // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]);    // Check for overflows
-        require(!frozenAccount[_from]);                         // Check if sender is frozen
-        require(!frozenAccount[_to]);                           // Check if recipient is frozen
+        require (_to != address(0x0), "R1");                          // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] >= _value, "R2");                   // Check if the sender has enough
+        require (balanceOf[_to] + _value >= balanceOf[_to], "R3");    // Check for overflows
+        require(!frozenAccount[_from], "R4");                         // Check if sender is frozen
+        require(!frozenAccount[_to], "R5");                           // Check if recipient is frozen
         balanceOf[_from] -= _value;                             // Subtract from the sender
         balanceOf[_to] += _value;                               // Add the same to the recipient
         emit Transfer(_from, _to, _value);

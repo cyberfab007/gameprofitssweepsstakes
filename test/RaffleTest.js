@@ -3,6 +3,7 @@ const AdvancedToken = artifacts.require("AdvancedToken")
 const ERC721 = artifacts.require("ERC721Full")
 const Ticket = artifacts.require("Ticket")
 const Raffle = artifacts.require("Raffle")
+const BigNumber = require('big-number');
 
 contract("Raffle Test", accounts => {
 
@@ -314,7 +315,7 @@ contract("Raffle Test", accounts => {
             assert.equal(finalBalanceWinnerERC721, 1, "Wrong balance")
             assert.equal(finalBalanceWinnerERC20, 77000009333, "Wrong balance")
             assert.equal(finalBalanceWinnerADV, 23000001111, "Wrong balance")
-            assert.equal((finalBalanceWinnerETH - initBalanceWinnerETH), 1234567890, "Wrong balance")
+            assert.equal(BigNumber(finalBalanceWinnerETH).minus(BigNumber(initBalanceWinnerETH)), 1234567890, "Wrong balance")
             assert.equal(finalBalanceRaffleERC721, 0, "Wrong balance")
             assert.equal(finalBalanceRaffleERC20, 0, "Wrong balance")
             assert.equal(finalBalanceRaffleADV, 0, "Wrong balance")

@@ -1,6 +1,84 @@
 pragma solidity >=0.4.22 <0.6.0;
 
 /**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev Returns true if `account` is a contract.
+     *
+     * This test is non-exhaustive, and there may be false-negatives: during the
+     * execution of a contract's constructor, its address will be reported as
+     * not containing a contract.
+     *
+     * > It is unsafe to assume that an address for which this function returns
+     * false is an externally-owned account (EOA) and not a contract.
+     */
+    function isContract(address account) internal view returns (bool) {
+        // This method relies in extcodesize, which returns 0 for contracts in
+        // construction, since the code is only stored at the end of the
+        // constructor execution.
+
+        uint256 size;
+        // solhint-disable-next-line no-inline-assembly
+        assembly { size := extcodesize(account) }
+        return size > 0;
+    }
+
+    /**
+     * @dev Converts an `address` into `address payable`. Note that this is
+     * simply a type cast: the actual underlying value is not changed.
+     */
+    function toPayable(address account) internal pure returns (address payable) {
+        return address(uint160(account));
+    }
+}
+
+library Util {
+
+    function bytes2bytes32(bytes memory arg, uint offset) public pure returns (bytes32) {
+        bytes32 out;
+        for (uint i = 0; i < 32; i++) {
+            out |= bytes32(arg[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
+    function uint2str(uint arg) public pure returns (string memory) {
+        if (arg == 0) {
+            return "0";
+        }
+        uint j = arg;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (arg != 0) {
+            bstr[k--] = byte(uint8(48 + arg % 10));
+            arg /= 10;
+        }
+        return string(bstr);
+    }
+
+    function addr2str(address arg) public pure returns (string memory) {
+        bytes32 value = bytes32(uint256(arg));
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(42);
+        str[0] = '0';
+        str[1] = 'x';
+        for (uint i = 0; i < 20; i++) {
+            str[2+i*2] = alphabet[uint(uint8(value[i + 12] >> 4))];
+            str[3+i*2] = alphabet[uint(uint8(value[i + 12] & 0x0f))];
+        }
+        return string(str);
+    }
+}
+
+/**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
  * checks.
  *
@@ -40,7 +118,7 @@ library SafeMath {
      * - Subtraction cannot overflow.
      */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "SafeMath: subtraction overflow");
+        require(b <= a, string(abi.encodePacked("SafeMath: subtraction overflow: ", Util.uint2str(a), " - ", Util.uint2str(b))));
         uint256 c = a - b;
 
         return c;
@@ -234,6 +312,77 @@ interface IERC20 {
 }
 
 /**
+ * @dev Interface of the ERC165 standard, as defined in the
+ * [EIP](https://eips.ethereum.org/EIPS/eip-165).
+ *
+ * Implementers can declare support of contract interfaces, which can then be
+ * queried by others (`ERC165Checker`).
+ *
+ * For an implementation, see `ERC165`.
+ */
+interface IERC165 {
+    /**
+     * @dev Returns true if this contract implements the interface defined by
+     * `interfaceId`. See the corresponding
+     * [EIP section](https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified)
+     * to learn more about how these ids are created.
+     *
+     * This function call must use less than 30 000 gas.
+     */
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+}
+
+/**
+ * @dev Required interface of an ERC721 compliant contract.
+ */
+contract IERC721 is IERC165 {
+    event Transfer721(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval721(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event ApprovalForAll721(address indexed owner, address indexed operator, bool approved);
+
+    /**
+     * @dev Returns the number of NFTs in `owner`'s account.
+     */
+    function balanceOf(address owner) public view returns (uint256 balance);
+
+    /**
+     * @dev Returns the owner of the NFT specified by `tokenId`.
+     */
+    function ownerOf(uint256 tokenId) public view returns (address owner);
+
+    /**
+     * @dev Transfers a specific NFT (`tokenId`) from one account (`from`) to
+     * another (`to`).
+     *
+     * 
+     *
+     * Requirements:
+     * - `from`, `to` cannot be zero.
+     * - `tokenId` must be owned by `from`.
+     * - If the caller is not `from`, it must be have been allowed to move this
+     * NFT by either `approve` or `setApproveForAll`.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId) public;
+    /**
+     * @dev Transfers a specific NFT (`tokenId`) from one account (`from`) to
+     * another (`to`).
+     *
+     * Requirements:
+     * - If the caller is not `from`, it must be approved to move this NFT by
+     * either `approve` or `setApproveForAll`.
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public;
+    function approve(address to, uint256 tokenId) public;
+    function getApproved(uint256 tokenId) public view returns (address operator);
+
+    function setApprovalForAll(address operator, bool _approved) public;
+    function isApprovedForAll(address owner, address operator) public view returns (bool);
+
+
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public;
+}
+
+/**
  * @title ERC20 token receiver interface
  * @dev Interface for any contract that wants to support transfers from ERC20 asset contracts.
  */
@@ -293,7 +442,7 @@ contract ITicketReceiver {
 }
 
 contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
-
+    using Address for address;
     using Counters for Counters.Counter;
 
     string    public name;
@@ -339,6 +488,11 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         _;
     }
 
+    uint256 constant private winningNumbersLengthMax = 10;
+
+
+    event LogERC20Allowance(address from, address to, uint256 value);
+
 
     constructor(
           string    memory _name,
@@ -378,7 +532,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * NOTE: If some ERC20 token contract doesn't implement calling this method, the depositor must call it manually 
      */
     function receiveApproval(address from, uint256 value, address token, bytes memory data) public onlyFirstRound {
-        require(isPrizeToken(token), string(abi.encodePacked("Deposit ERC20: wrong prize token ", addr2str(msg.sender))));
+        require(isPrizeToken(token), string(abi.encodePacked("Deposit ERC20: wrong prize token ", Util.addr2str(msg.sender))));
         require(owner == from, "Deposit ERC20: Depositor is not raffle owner");
         prizeERC20[token] += value;                   // record the deposit
     }
@@ -389,7 +543,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data) public onlyFirstRound returns (bytes4) {
         if (msg.sender != ticketToken) {
-            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit ERC721: wrong prize token ", addr2str(msg.sender))));
+            require(isPrizeToken(msg.sender), string(abi.encodePacked("Deposit ERC721: wrong prize token ", Util.addr2str(msg.sender))));
             require(owner == from, "Deposit ERC721: Depositor is not raffle owner");
             prizeERC721[msg.sender].push(tokenId);    // record the deposit
         }
@@ -402,7 +556,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      * NOTE2: We could also add a password provided by a Ticket depositor, so the hash will consist of (owner address + ticket number + password)
      */
     function onTicketReceived(address from, bytes32 hash) onlyFirstRound public returns (bytes4) {
-        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", addr2str(msg.sender))));
+        require(msg.sender == ticketToken, string(abi.encodePacked("Deposit Ticket: wrong ticket token ", Util.addr2str(msg.sender))));
         playerToHash[from] = hash;                    // record the deposit
         return this.onTicketReceived.selector;        // must return this value. See Ticket._checkOnTicketReceived()
     }
@@ -420,29 +574,41 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
 
     function execute() public onlyOwner onlySecondRound {
         state = LotteryState.Finished;
-
+        uint256 winningNumbersLength = numbers.length > winningNumbersLengthMax ? winningNumbersLengthMax : numbers.length;
         uint256 seedNumberIndex = 0;
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < winningNumbersLength; i++) {
             uint256 randomNumber = numbers[getRandomNumberIndex(seedNumberIndex)];
             seedNumberIndex = winningNumbers.push(randomNumber);
         }
-        
         verifyWinner();
     }
 
     function verifyWinner() private {
         for (uint256 i = 0; i < winningNumbers.length; i++) {
             winner = numberToPlayer[winningNumbers[i]];
-            // TODO verification
-            if (winner != address(0)) {
-                break;
-            }
+            if (winner != address(0)) break;
         }
-        distributeFunds();
+        giveAwayPrize();
     }
 
-    function distributeFunds() private {
-        // TODO
+    function giveAwayPrize() private {
+        if (prizeEtherAllowed && address(this).balance > 0) {
+            winner.toPayable().transfer(address(this).balance);
+        }
+        for (uint256 i = 0; i < prizeTokens.length; i++) {
+            if (prizeERC20[prizeTokens[i]] > 0) {
+                IERC20 token = IERC20(prizeTokens[i]);
+                uint256 allowance = token.allowance(owner, address(this));
+                emit LogERC20Allowance(owner, address(this), allowance);
+                token.transferFrom(owner, winner, allowance);
+            }
+            if (prizeERC721[prizeTokens[i]].length > 0) {
+                IERC721 token = IERC721(prizeTokens[i]);
+                for (uint256 j = 0; j < prizeERC721[prizeTokens[i]].length; j++) {
+                    token.safeTransferFrom(address(this), winner, prizeERC721[prizeTokens[i]][j]); 
+                }               
+            }
+        }
     }
 
     function getRandomNumberIndex(uint256 seedNumberIndex) private view returns (uint256) {
@@ -453,33 +619,6 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         return seed % numbers.length;
     }
 
-    function bytes2bytes32(bytes memory b, uint offset) private pure returns (bytes32) {
-        bytes32 out;
-        for (uint i = 0; i < 32; i++) {
-            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
-        }
-        return out;
-    }
-
-    function uint2str(uint _i) private pure returns (string memory) {
-        if (_i == 0) {
-            return "0";
-        }
-        uint j = _i;
-        uint len;
-        while (j != 0) {
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        while (_i != 0) {
-            bstr[k--] = byte(uint8(48 + _i % 10));
-            _i /= 10;
-        }
-        return string(bstr);
-    }
-
     function isPrizeToken(address a) private view returns (bool) {
         for (uint256 i = 0; i < prizeTokens.length; i++) {
             if (a == prizeTokens[i]) {
@@ -487,20 +626,6 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
             }
         }
         return false;
-    }
-
-    function addr2str(address _addr) private pure returns(string memory) {
-        bytes32 value = bytes32(uint256(_addr));
-        bytes memory alphabet = "0123456789abcdef";
-
-        bytes memory str = new bytes(42);
-        str[0] = '0';
-        str[1] = 'x';
-        for (uint i = 0; i < 20; i++) {
-            str[2+i*2] = alphabet[uint(uint8(value[i + 12] >> 4))];
-            str[3+i*2] = alphabet[uint(uint8(value[i + 12] & 0x0f))];
-        }
-        return string(str);
     }
 
     function setName(string memory _name) onlyOwner public {
