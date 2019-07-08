@@ -267,9 +267,10 @@ contract("Raffle Test", accounts => {
             assert.equal(initBalanceRaffleERC20, 77000009333, "Wrong balance")
             assert.equal(initBalanceRaffleADV, 23000001111, "Wrong balance")
             assert.equal(initBalanceRaffleETH, 1234567890, "Wrong balance")
-            return raffle.execute()
+            return raffle.execute()                       // execute raffle
           })
-          .then(() => raffle.winner())
+          .then(() => raffle.giveAwayPrize(0))            // assume the 1st winner verified for give-away
+          .then(() => raffle.winner())                    // re-check winner
           .then(winner => {
             assert.equal(winner, accounts[2], "Wrong winner")
             return erc721.balanceOf(accounts[2])          // check balance of [2] (the winner) after execution

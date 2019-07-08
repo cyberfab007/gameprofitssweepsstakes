@@ -66,15 +66,30 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
      */
     string    public sponsoredBy;
 
+    /**
+     * Players and their hashes (can be multiple) submitted in the 1st round
+     */
+    mapping (address => bytes32[]) private playerToHashes;
 
-    mapping (address => bytes32[]) playerToHashes;
+    /**
+     * Ticket numbers claimed by players in the 2nd round
+     */
+    mapping (uint256 => address) private numberToPlayer;
 
-    mapping (uint256 => address) numberToPlayer;
-
+    /**
+     * All ticket numbers involved into the raffle
+     */
     uint256[] public numbers;
 
+    /**
+     * It is more robust to define several winning numbers,
+     * because in case if the first one belongs to a person 
+     * who is not eligible for prize receival,
+     * we can give it to the next one, etc.
+     */
+    uint8 constant private winnersLengthMax = 10;
+    address[] public winners;
     uint256[] public winningNumbers;
-
     address public winner;
 
 
@@ -99,7 +114,7 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
         _;
     }
 
-    uint256 constant private winningNumbersLengthMax = 10;
+
 
 
     event LogERC20Allowance(address from, address to, uint256 value);
@@ -204,24 +219,18 @@ contract Raffle is Owned, IExtERC20Receiver, IERC721Receiver, ITicketReceiver {
             require(now >= execTimestamp, "Execution not allowed: execTimestamp is not reached yet");
         }
         state = LotteryState.Finished;
-        uint256 winningNumbersLength = numbers.length > winningNumbersLengthMax ? winningNumbersLengthMax : numbers.length;
+        uint256 winnersLength = numbers.length > winnersLengthMax ? winnersLengthMax : numbers.length;
         uint256 seedNumberIndex = 0;
-        for (uint256 i = 0; i < winningNumbersLength; i++) {
+        for (uint256 i = 0; i < winnersLength; i++) {
             uint256 randomNumber = numbers[getRandomNumberIndex(seedNumberIndex)];
             seedNumberIndex = winningNumbers.push(randomNumber);
+            winners.push(numberToPlayer[randomNumber]);
         }
-        verifyWinner();
     }
 
-    function verifyWinner() private {
-        for (uint256 i = 0; i < winningNumbers.length; i++) {
-            winner = numberToPlayer[winningNumbers[i]];
-            if (winner != address(0)) break;
-        }
-        giveAwayPrize();
-    }
-
-    function giveAwayPrize() private {
+    function giveAwayPrize(uint256 winnerIndex) public onlyOwner {
+        winner = winners[winnerIndex];
+        require(state == LotteryState.Finished, "Allowed after the 2nd round only");
         if (prizeEtherAllowed && address(this).balance > 0) {
             winner.toPayable().transfer(address(this).balance);
         }
