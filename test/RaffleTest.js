@@ -3,7 +3,8 @@ const AdvancedToken = artifacts.require("AdvancedToken")
 const ERC721 = artifacts.require("ERC721Full")
 const Ticket = artifacts.require("Ticket")
 const Raffle = artifacts.require("Raffle")
-const BigNumber = require('big-number');
+
+const BigNumber = require('big-number')
 
 contract("Raffle Test", accounts => {
 
@@ -267,13 +268,13 @@ contract("Raffle Test", accounts => {
             assert.equal(initBalanceRaffleERC20, 77000009333, "Wrong balance")
             assert.equal(initBalanceRaffleADV, 23000001111, "Wrong balance")
             assert.equal(initBalanceRaffleETH, 1234567890, "Wrong balance")
-            return raffle.execute()                       // execute raffle
+            return raffle.execute()               // execute raffle
           })
-          .then(() => raffle.giveAwayPrize(0))            // assume the 1st winner verified for give-away
-          .then(() => raffle.winner())                    // re-check winner
+          .then(() => raffle.giveAwayPrize(0))    // assume the 1st winner verified for give-away (winner = winners[0])
+          .then(() => raffle.winner())            // re-check winner
           .then(winner => {
             assert.equal(winner, accounts[2], "Wrong winner")
-            return erc721.balanceOf(accounts[2])          // check balance of [2] (the winner) after execution
+            return erc721.balanceOf(accounts[2])  // check balance of [2] (the winner) after execution
           })
           .then(balance => {
             finalBalanceWinnerERC721 = balance
