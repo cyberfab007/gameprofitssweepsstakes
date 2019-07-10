@@ -160,7 +160,7 @@ contract("Raffle Test", accounts => {
           .then(owner => assert.equal(owner, accounts[5], "Wrong owner"))
     })
 
-    it("should approve() Tickets #17,#22,#27,#44 from [0],[5],[1],[2] to Raffle, then runSecondRound() and claimTicket()s by numbers", () => {
+    it("should approveAndCall() Tickets #17,#22,#27,#44 from [0],[5],[1],[2] to Raffle, then runSecondRound() and claimTicket()s by numbers", () => {
         let ticket, raffle;
         return Ticket.deployed()
           .then(instance => {
