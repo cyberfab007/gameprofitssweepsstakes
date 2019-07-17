@@ -1,4 +1,4 @@
 #!/bin/bash
 set -xe
 
-truffle migrate --reset --network development
+truffle migrate --reset --network dev

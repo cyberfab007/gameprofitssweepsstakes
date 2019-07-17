@@ -3,4 +3,4 @@ set -xe
 
 rm -rf build/
 npm run merge
-truffle compile --all --network development
+truffle compile --all --network dev
