@@ -34,4 +34,8 @@ library Counters {
     function decrement(Counter storage counter) internal {
         counter._value = counter._value.sub(1);
     }
+
+    function set(Counter storage counter, uint256 value) internal {
+        counter._value = value;
+    }
 }

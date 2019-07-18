@@ -15,7 +15,7 @@ module.exports = function(deployer) {
         deployer.link(Util, AdvancedToken);
         deployer.link(Util, ERC20);
         deployer.link(Util, Raffle);
-        return deployer.deploy(Ticket, "Ticket", "TICKET").then(instance => {
+        return deployer.deploy(Ticket, 8000, "Ticket", "TICKET").then(instance => {
             ticket = instance
             return deployer.deploy(ERC721, "ERC-721 Standard", "ERC721").then(instance => {
                 erc721 = instance

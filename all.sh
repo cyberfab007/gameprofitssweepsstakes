@@ -1,5 +1,5 @@
 #!/bin/bash
 
-./build.sh
-./deploy.sh
-./test.sh
+./build.sh $1
+./deploy.sh $1
+./test.sh $1

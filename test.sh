@@ -1,4 +1,4 @@
 #!/bin/bash
 set -xe
 
-truffle test --network dev
+truffle test --network $1

@@ -378,6 +378,10 @@ library Counters {
     function decrement(Counter storage counter) internal {
         counter._value = counter._value.sub(1);
     }
+
+    function set(Counter storage counter, uint256 value) internal {
+        counter._value = value;
+    }
 }
 
 /**
@@ -1117,14 +1121,12 @@ contract Ticket is Owned, ERC721Full {
      */
     event FrozenFunds(address target, bool frozen);
 
-    constructor(
-        uint256 initialSupply,
-        string memory tokenName,
-        string memory tokenSymbol
-    ) ERC721Full(tokenName, tokenSymbol) public {
+    constructor(uint256 initialSupply, string memory tokenName, string memory tokenSymbol)
+      ERC721Full(tokenName, tokenSymbol) public {
+        require(initialSupply <= 8000, "Max 8000 Tickets initially"); // TODO TDB
+        _ownedTokensCount[owner].set(initialSupply);
         for (uint256 tokenId = 0; tokenId < initialSupply; tokenId++) {
             _tokenOwner[tokenId] = owner;
-            _ownedTokensCount[owner].increment();
             _addTokenToOwnerEnumeration(owner, tokenId);
             _addTokenToAllTokensEnumeration(tokenId);
         }
