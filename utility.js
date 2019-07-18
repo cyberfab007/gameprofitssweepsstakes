@@ -1,7 +1,5 @@
 
-// 20 transactions * 8000000 gas * 15000000000 wei = 240*10^1+6+9 = 2.4 ETH
-
-var totalAmount = 1000;
+var totalAmount = 100000;
 var mintedAmount = 0;
 var interval;
 
@@ -26,5 +24,5 @@ var batchMintERC721 = function () {
 }
 
 var start = function () {
-    interval = setInterval(batchMintERC721, 15000);
+    interval = setInterval(batchMintERC721, 45000);
 }
