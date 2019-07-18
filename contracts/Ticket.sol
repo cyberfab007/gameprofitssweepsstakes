@@ -17,9 +17,17 @@ contract Ticket is Owned, ERC721Full {
     event FrozenFunds(address target, bool frozen);
 
     constructor(
+        uint256 initialSupply,
         string memory tokenName,
         string memory tokenSymbol
-    ) ERC721Full(tokenName, tokenSymbol) public {}
+    ) ERC721Full(tokenName, tokenSymbol) public {
+        for (uint256 tokenId = 0; tokenId < initialSupply; tokenId++) {
+            _tokenOwner[tokenId] = owner;
+            _ownedTokensCount[owner].increment();
+            _addTokenToOwnerEnumeration(owner, tokenId);
+            _addTokenToAllTokensEnumeration(tokenId);
+        }
+    }
 
     /**
      * @notice Internal transfer, only can be called by this contract
@@ -42,7 +50,7 @@ contract Ticket is Owned, ERC721Full {
      */
     function approveAndCall(address spender, uint256 tokenId) public returns (bool success) {
         approve(spender, tokenId);
-        require(_checkOnTicketReceived(spender, tokenId), "Ticket: transfer to non ITicketReceiver implementer");
+        require(_checkOnTicketReceived(spender, tokenId), "Transfer to non ITicketReceiver implementer");
         return true;
     }
 
@@ -67,6 +75,7 @@ contract Ticket is Owned, ERC721Full {
      * @param amount Amount of tokens it will receive
      */
     function mintAmount(address target, uint256 amount) onlyOwner public {
+        require(amount <= 50, "Max 50 Tickets per tx"); // TODO TDB
         for (uint256 tokenId = 0; tokenId < 2**256-1 && amount > 0; tokenId++) {
             if (!_exists(tokenId)) {
                 _mint(target, tokenId);

@@ -394,13 +394,13 @@ contract ERC721 is ERC165, IERC721 {
     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
     // Mapping from token ID to owner
-    mapping (uint256 => address) private _tokenOwner;
+    mapping (uint256 => address) internal _tokenOwner;
 
     // Mapping from token ID to approved address
     mapping (uint256 => address) private _tokenApprovals;
 
     // Mapping from owner to number of owned token
-    mapping (address => Counters.Counter) private _ownedTokensCount;
+    mapping (address => Counters.Counter) internal _ownedTokensCount;
 
     // Mapping from owner to operator approvals
     mapping (address => mapping (address => bool)) private _operatorApprovals;
@@ -668,98 +668,6 @@ contract ERC721 is ERC165, IERC721 {
 }
 
 /**
- * @title Roles
- * @dev Library for managing addresses assigned to a Role.
- */
-library Roles {
-    struct Role {
-        mapping (address => bool) bearer;
-    }
-
-    /**
-     * @dev Give an account access to this role.
-     */
-    function add(Role storage role, address account) internal {
-        require(!has(role, account), "Roles: account already has role");
-        role.bearer[account] = true;
-    }
-
-    /**
-     * @dev Remove an account's access to this role.
-     */
-    function remove(Role storage role, address account) internal {
-        require(has(role, account), "Roles: account does not have role");
-        role.bearer[account] = false;
-    }
-
-    /**
-     * @dev Check if an account has this role.
-     * @return bool
-     */
-    function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "Roles: account is the zero address");
-        return role.bearer[account];
-    }
-}
-
-contract MinterRole {
-    using Roles for Roles.Role;
-
-    event MinterAdded(address indexed account);
-    event MinterRemoved(address indexed account);
-
-    Roles.Role private _minters;
-
-    constructor () internal {
-        _addMinter(msg.sender);
-    }
-
-    modifier onlyMinter() {
-        require(isMinter(msg.sender), "MinterRole: caller does not have the Minter role");
-        _;
-    }
-
-    function isMinter(address account) public view returns (bool) {
-        return _minters.has(account);
-    }
-
-    function addMinter(address account) public onlyMinter {
-        _addMinter(account);
-    }
-
-    function renounceMinter() public {
-        _removeMinter(msg.sender);
-    }
-
-    function _addMinter(address account) internal {
-        _minters.add(account);
-        emit MinterAdded(account);
-    }
-
-    function _removeMinter(address account) internal {
-        _minters.remove(account);
-        emit MinterRemoved(account);
-    }
-}
-
-/**
- * @title ERC721Mintable
- * @dev ERC721 minting logic.
- */
-contract ERC721Mintable is ERC721, MinterRole {
-    /**
-     * @dev Function to mint tokens.
-     * @param to The address that will receive the minted tokens.
-     * @param tokenId The token id to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address to, uint256 tokenId) public onlyMinter returns (bool) {
-        _mint(to, tokenId);
-        return true;
-    }
-}
-
-/**
  * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
  * @dev See https://eips.ethereum.org/EIPS/eip-721
  */
@@ -894,7 +802,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
      * @param to address representing the new owner of the given token ID
      * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
      */
-    function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
+    function _addTokenToOwnerEnumeration(address to, uint256 tokenId) internal {
         _ownedTokensIndex[tokenId] = _ownedTokens[to].length;
         _ownedTokens[to].push(tokenId);
     }
@@ -903,7 +811,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
      * @dev Private function to add a token to this extension's token tracking data structures.
      * @param tokenId uint256 ID of the token to be added to the tokens list
      */
-    function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
+    function _addTokenToAllTokensEnumeration(uint256 tokenId) internal {
         _allTokensIndex[tokenId] = _allTokens.length;
         _allTokens.push(tokenId);
     }
@@ -961,6 +869,114 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
         // This also deletes the contents at the last position of the array
         _allTokens.length--;
         _allTokensIndex[tokenId] = 0;
+    }
+}
+
+/**
+ * @title ERC721 Burnable Token
+ * @dev ERC721 Token that can be irreversibly burned (destroyed).
+ */
+contract ERC721Burnable is ERC721 {
+    /**
+     * @dev Burns a specific ERC721 token.
+     * @param tokenId uint256 id of the ERC721 token to be burned.
+     */
+    function burn(uint256 tokenId) public {
+        //solhint-disable-next-line max-line-length
+        require(_isApprovedOrOwner(msg.sender, tokenId), "ERC721Burnable: caller is not owner nor approved");
+        _burn(tokenId);
+    }
+}
+
+/**
+ * @title Roles
+ * @dev Library for managing addresses assigned to a Role.
+ */
+library Roles {
+    struct Role {
+        mapping (address => bool) bearer;
+    }
+
+    /**
+     * @dev Give an account access to this role.
+     */
+    function add(Role storage role, address account) internal {
+        require(!has(role, account), "Roles: account already has role");
+        role.bearer[account] = true;
+    }
+
+    /**
+     * @dev Remove an account's access to this role.
+     */
+    function remove(Role storage role, address account) internal {
+        require(has(role, account), "Roles: account does not have role");
+        role.bearer[account] = false;
+    }
+
+    /**
+     * @dev Check if an account has this role.
+     * @return bool
+     */
+    function has(Role storage role, address account) internal view returns (bool) {
+        require(account != address(0), "Roles: account is the zero address");
+        return role.bearer[account];
+    }
+}
+
+contract MinterRole {
+    using Roles for Roles.Role;
+
+    event MinterAdded(address indexed account);
+    event MinterRemoved(address indexed account);
+
+    Roles.Role private _minters;
+
+    constructor () internal {
+        _addMinter(msg.sender);
+    }
+
+    modifier onlyMinter() {
+        require(isMinter(msg.sender), "MinterRole: caller does not have the Minter role");
+        _;
+    }
+
+    function isMinter(address account) public view returns (bool) {
+        return _minters.has(account);
+    }
+
+    function addMinter(address account) public onlyMinter {
+        _addMinter(account);
+    }
+
+    function renounceMinter() public {
+        _removeMinter(msg.sender);
+    }
+
+    function _addMinter(address account) internal {
+        _minters.add(account);
+        emit MinterAdded(account);
+    }
+
+    function _removeMinter(address account) internal {
+        _minters.remove(account);
+        emit MinterRemoved(account);
+    }
+}
+
+/**
+ * @title ERC721Mintable
+ * @dev ERC721 minting logic.
+ */
+contract ERC721Mintable is ERC721, MinterRole {
+    /**
+     * @dev Function to mint tokens.
+     * @param to The address that will receive the minted tokens.
+     * @param tokenId The token id to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address to, uint256 tokenId) public onlyMinter returns (bool) {
+        _mint(to, tokenId);
+        return true;
     }
 }
 
@@ -1064,7 +1080,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
  * Moreover, it includes approve all functionality using operator terminology
  * @dev see https://eips.ethereum.org/EIPS/eip-721
  */
-contract ERC721Full is ERC721Mintable, ERC721Enumerable, ERC721Metadata {
+contract ERC721Full is ERC721Enumerable, ERC721Mintable, ERC721Burnable, ERC721Metadata {
     constructor (string memory name, string memory symbol) public ERC721Metadata(name, symbol) {
         // solhint-disable-previous-line no-empty-blocks
     }
@@ -1102,9 +1118,17 @@ contract Ticket is Owned, ERC721Full {
     event FrozenFunds(address target, bool frozen);
 
     constructor(
+        uint256 initialSupply,
         string memory tokenName,
         string memory tokenSymbol
-    ) ERC721Full(tokenName, tokenSymbol) public {}
+    ) ERC721Full(tokenName, tokenSymbol) public {
+        for (uint256 tokenId = 0; tokenId < initialSupply; tokenId++) {
+            _tokenOwner[tokenId] = owner;
+            _ownedTokensCount[owner].increment();
+            _addTokenToOwnerEnumeration(owner, tokenId);
+            _addTokenToAllTokensEnumeration(tokenId);
+        }
+    }
 
     /**
      * @notice Internal transfer, only can be called by this contract
@@ -1127,7 +1151,7 @@ contract Ticket is Owned, ERC721Full {
      */
     function approveAndCall(address spender, uint256 tokenId) public returns (bool success) {
         approve(spender, tokenId);
-        require(_checkOnTicketReceived(spender, tokenId), "Ticket: transfer to non ITicketReceiver implementer");
+        require(_checkOnTicketReceived(spender, tokenId), "Transfer to non ITicketReceiver implementer");
         return true;
     }
 
@@ -1152,6 +1176,7 @@ contract Ticket is Owned, ERC721Full {
      * @param amount Amount of tokens it will receive
      */
     function mintAmount(address target, uint256 amount) onlyOwner public {
+        require(amount <= 50, "Max 50 Tickets per tx"); // TODO TDB
         for (uint256 tokenId = 0; tokenId < 2**256-1 && amount > 0; tokenId++) {
             if (!_exists(tokenId)) {
                 _mint(target, tokenId);
