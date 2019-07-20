@@ -31,7 +31,7 @@ var batchMint = function () {
     
     var balance = eth.call(paramsBalanceOf);
     
-    console.log(new Date() + "\tBalance of " + fromRoot ": " + balance + ",\tTickets left to mint: " + (totalAmount - mintedAmount));
+    console.log(new Date() + "\tBalance of " + fromRoot + ": " + balance + ",\tTickets left to mint: " + (totalAmount - mintedAmount));
 
     eth.sendTransaction(paramsMintAmount, handleReceipt);
 
