@@ -17,7 +17,7 @@ var batchMintERC721 = function () {
 
     eth.sendTransaction(params);
  
-    mintedAmount += 50;
+    mintedAmount += 48;
     if (mintedAmount > totalAmount) {
         clearInterval(interval);
     }
