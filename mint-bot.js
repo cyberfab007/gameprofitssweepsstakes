@@ -2,7 +2,7 @@
 var totalAmount = 100000;
 var mintedAmount = 0;
 var batchAmount = 20;
-var batchAmountParam = batchAmount.toString(16).padStart(64, '0');
+var batchAmountParam = new String(batchAmount.toString(16)).padStart(64, '0');
 var fromRoot = '2e16f253e0a3B544f7e755A8d904976adAEa7833'
 var fromParam = fromRoot.toLowerCase().padStart(64, '0');
 
