@@ -49,6 +49,6 @@ var start = function (_totalAmount, _batchAmount, _interval) {
         return;
     }
     intervalMs = _interval ? _interval * 1000 : intervalMs;
-    console.log("Started minting " + totalAmount + " Tickets at rate " + batchAmountDec + " Tickets per " + (intervalMs / 1000) + " seconds");
+    console.log("Started minting " + totalAmount + " Tickets at rate " + batchAmount + " Tickets per " + (intervalMs / 1000) + " seconds");
     interval = setInterval(batchMint, intervalMs);
 }
