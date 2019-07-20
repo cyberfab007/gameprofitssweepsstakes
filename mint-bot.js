@@ -22,7 +22,7 @@ var paramsMintAmount = {
 var intervalMs = 40000;
 var interval;
 
-var handleReceipt = (error, receipt) => {
+var handleReceipt = function (error, receipt) {
   if (error) console.error(error);
   else console.log(receipt);
 }
