@@ -2,9 +2,9 @@
 var totalAmount = 100000;
 var mintedAmount = 0;
 var batchAmount = 20;
-var batchAmountParam = new String(batchAmount.toString(16)).padStart(64, '0');
-var fromRoot = '2e16f253e0a3B544f7e755A8d904976adAEa7833'
-var fromParam = fromRoot.toLowerCase().padStart(64, '0');
+var batchAmountParam = '0000000000000000000000000000000000000000000000000000' + batchAmount.toString(16);
+var fromRoot =                       '2e16f253e0a3B544f7e755A8d904976adAEa7833';
+var fromParam =        '00000000000000' + fromRoot.toLowerCase();
 
 var paramsBalanceOf = {
   "to": "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c",
@@ -42,9 +42,13 @@ var batchMint = function () {
 }
 
 var start = function (_totalAmount, _batchAmount, _interval) {
-    totalAmount = _totalAmount;
-    batchAmount = _batchAmount;
-    intervalMs = _interval * 1000;
+    totalAmount = _totalAmount ? _totalAmount : totalAmount;
+    batchAmount = _batchAmount ? _batchAmount : batchAmount;
+    if (batchAmount < 17 || batchAmount > 50) {
+        console.log("Set 17 <= _batchAmount <= 50");
+        return;
+    }
+    intervalMs = _interval ? _interval * 1000 : intervalMs;
     console.log("Started minting " + totalAmount + " Tickets at rate " + batchAmountDec + " Tickets per " + (intervalMs / 1000) + " seconds");
     interval = setInterval(batchMint, intervalMs);
 }
