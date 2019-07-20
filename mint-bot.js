@@ -35,7 +35,7 @@ var batchMint = function () {
 
     eth.sendTransaction(paramsMintAmount, handleReceipt);
 
-    mintedAmount += amountDec;
+    mintedAmount += batchAmount;
     if (mintedAmount > totalAmount) {
         clearInterval(interval);
     }
