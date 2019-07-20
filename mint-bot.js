@@ -22,18 +22,18 @@ var paramsMintAmount = {
 var intervalMs = 40000;
 var interval;
 
-var handleReceipt = function (error, receipt) {
+var callback = function (error, result) {
   if (error) console.error(error);
-  else console.log(receipt);
+  else console.log(result);
 }
 
 var batchMint = function () {
     
-    var balance = eth.call(paramsBalanceOf);
+    var balance = eth.call(paramsBalanceOf, 'latest', callback);
     
     console.log(new Date() + "\tBalance of " + fromRoot + ": " + balance + ",\tTickets left to mint: " + (totalAmount - mintedAmount));
 
-    eth.sendTransaction(paramsMintAmount, handleReceipt);
+    eth.sendTransaction(paramsMintAmount, callback);
 
     mintedAmount += batchAmount;
     if (mintedAmount > totalAmount) {
