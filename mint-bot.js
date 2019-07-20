@@ -1,13 +1,17 @@
 
 var totalAmount = 100000;
 var mintedAmount = 0;
-var batchAmountDec = 20;
-var batchAmountHex = batchDec.toString(16);
-var batchAmountParam = batchHex.padStart(64, '0');
-var fromRoot = '2E16f253e0a3b544f7e755A8d904976adAEa7833'
+var batchAmount = 20;
+var batchAmountParam = batchAmount.toString(16).padStart(64, '0');
+var fromRoot = '2e16f253e0a3B544f7e755A8d904976adAEa7833'
 var fromParam = fromRoot.toLowerCase().padStart(64, '0');
 
-var params = {
+var paramsBalanceOf = {
+  "to": "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c",
+  "data": "0x70a08231" + fromParam
+};
+
+var paramsMintAmount = {
   "from": '0x' + fromRoot,
   "to": "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c",
   "gas": "0x7A1200",
@@ -23,10 +27,13 @@ var handleReceipt = (error, receipt) => {
   else console.log(receipt);
 }
 
-var batchMintERC721 = function () {
-    console.log("Tickets left to mint: " + (totalAmount - mintedAmount));
+var batchMint = function () {
+    
+    var balance = eth.call(paramsBalanceOf);
+    
+    console.log(new Date() + "\tBalance of " + fromRoot ": " + balance + ",\tTickets left to mint: " + (totalAmount - mintedAmount));
 
-    eth.sendTransaction(params, handleReceipt);
+    eth.sendTransaction(paramsMintAmount, handleReceipt);
 
     mintedAmount += amountDec;
     if (mintedAmount > totalAmount) {
@@ -34,7 +41,10 @@ var batchMintERC721 = function () {
     }
 }
 
-var start = function () {
+var start = function (_totalAmount, _batchAmount, _interval) {
+    totalAmount = _totalAmount;
+    batchAmount = _batchAmount;
+    intervalMs = _interval * 1000;
     console.log("Started minting " + totalAmount + " Tickets at rate " + batchAmountDec + " Tickets per " + (intervalMs / 1000) + " seconds");
-    interval = setInterval(batchMintERC721, intervalMs);
+    interval = setInterval(batchMint, intervalMs);
 }
