@@ -2,18 +2,19 @@
 var totalAmount = 100000;
 var mintedAmount = 0;
 var batchAmount = 20;
-var batchAmountParam = '0000000000000000000000000000000000000000000000000000' + batchAmount.toString(16);
-var fromRoot =                       '2e16f253e0a3B544f7e755A8d904976adAEa7833';
-var fromParam =        '00000000000000' + fromRoot.toLowerCase();
+var batchAmountParam = '00000000000000000000000000000000000000000000000000000000000000' + batchAmount.toString(16);
+var fromRoot =                                 '2e16f253e0a3B544f7e755A8d904976adAEa7833';
+var fromParam =        '000000000000000000000000' + fromRoot.toLowerCase();
+var to = "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c";
 
 var paramsBalanceOf = {
-  "to": "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c",
+  "to": to,
   "data": "0x70a08231" + fromParam
 };
 
 var paramsMintAmount = {
   "from": '0x' + fromRoot,
-  "to": "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c",
+  "to": to,
   "gas": "0x7A1200",
   "gasPrice": "0x37E11D600",
   "data": "0x0e583dd2" + fromParam + batchAmountParam
@@ -29,9 +30,9 @@ var callback = function (error, result) {
 
 var batchMint = function () {
     
-    var balance = eth.call(paramsBalanceOf, 'latest', callback);
+    var balance = eth.call(paramsBalanceOf);
     
-    console.log(new Date() + "\tBalance of " + fromRoot + ": " + balance + ",\tTickets left to mint: " + (totalAmount - mintedAmount));
+    console.log(new Date() + "  Balance of " + fromRoot + ": Tickets left to mint: " + (totalAmount - mintedAmount));
 
     eth.sendTransaction(paramsMintAmount, callback);
 
