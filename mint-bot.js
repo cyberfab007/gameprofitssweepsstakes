@@ -13,14 +13,7 @@ var paramsBalanceOf = {
   "data": "0x70a08231" + fromParam
 };
 
-var paramsMintAmount = {
-  "from": '0x' + fromRoot,
-  "to": to,
-  "gas": "0x7A1200",
-  "gasPrice": "0x37E11D600",
-  "data": "0x0e583dd2" + fromParam + batchAmountParam
-};
-
+var paramsMintAmount;
 var intervalMs = 40000;
 var interval;
 
@@ -51,6 +44,13 @@ var start = function (_totalAmount, _batchAmount, _interval) {
         return;
     }
     batchAmountParam = '00000000000000000000000000000000000000000000000000000000000000' + (batchAmount < 17 ? '0' : '') + batchAmount.toString(16);
+    paramsMintAmount = {
+      "from": '0x' + fromRoot,
+      "to": to,
+      "gas": "0x7A1200",
+      "gasPrice": "0x37E11D600",
+      "data": "0x0e583dd2" + fromParam + batchAmountParam
+    };
     intervalMs = _interval ? _interval * 1000 : intervalMs;
     console.log("Started minting " + totalAmount + " Tickets at rate " + batchAmount + " Tickets per " + (intervalMs / 1000) + " seconds");
     interval = setInterval(batchMint, intervalMs);
