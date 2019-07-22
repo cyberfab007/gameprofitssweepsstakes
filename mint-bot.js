@@ -2,7 +2,7 @@
 var totalAmount = 100000;
 var mintedAmount = 0;
 var batchAmount = 20;
-var batchAmountParam = '00000000000000000000000000000000000000000000000000000000000000' + batchAmount.toString(16);
+var batchAmountParam = '0000000000000000000000000000000000000000000000000000000000000' + (batchAmount < 17 ? '0' : '') + batchAmount.toString(16);
 var fromRoot =                                 '2e16f253e0a3B544f7e755A8d904976adAEa7833';
 var fromParam =        '000000000000000000000000' + fromRoot.toLowerCase();
 // var to = "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c";
@@ -46,8 +46,8 @@ var batchMint = function () {
 var start = function (_totalAmount, _batchAmount, _interval) {
     totalAmount = _totalAmount ? _totalAmount : totalAmount;
     batchAmount = _batchAmount ? _batchAmount : batchAmount;
-    if (batchAmount < 17 || batchAmount > 50) {
-        console.log("Set 17 <= _batchAmount <= 50");
+    if (batchAmount < 0 || batchAmount > 255) {
+        console.log("Set 0 <= _batchAmount <= 50");
         return;
     }
     intervalMs = _interval ? _interval * 1000 : intervalMs;
