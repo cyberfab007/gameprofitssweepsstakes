@@ -7,6 +7,9 @@ var fromRoot = '2e16f253e0a3B544f7e755A8d904976adAEa7833';
 var fromParam = '000000000000000000000000' + fromRoot.toLowerCase();
 // var to = "0xD32F8de3d5DAB3A61c3c58046E086065FEC4168c";
 var to = "0x6E4610109dD9921e2d23312669f4521d5D5A45f6";
+// var gas = "0x7A1200"; // 8M
+var gas = "0x14FB180"; // 22M
+var gasPrice = "0x37E11D600"; // 15B
 
 var paramsBalanceOf = {
   "to": to,
@@ -47,8 +50,8 @@ var start = function (_totalAmount, _batchAmount, _interval) {
     paramsMintAmount = {
       "from": '0x' + fromRoot,
       "to": to,
-      "gas": "0x7A1200",
-      "gasPrice": "0x37E11D600",
+      "gas": gas,
+      "gasPrice": gasPrice,
       "data": "0x0e583dd2" + fromParam + batchAmountParam
     };
     intervalMs = _interval ? _interval * 1000 : intervalMs;
