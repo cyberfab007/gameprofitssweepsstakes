@@ -41,12 +41,11 @@ module.exports = {
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
-    //
     dev: {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: 2030,      // Custom network (any: "*" / default: none)
-      gas:      75000000,    // Gas sent with each transaction (default: ~6700000)
+      gas:      3347633570,  // Gas sent with each transaction (default: ~6700000)
       gasPrice: 15000000000, // 15 gwei (in wei) (default: 100 gwei)
     },
 
@@ -55,7 +54,7 @@ module.exports = {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: 2030,      // Custom network (any: "*" / default: none)
-      gas:      75000000,    // Gas sent with each transaction (default: ~6700000)
+      gas:      3347633570,  // Gas sent with each transaction (default: ~6700000)
       gasPrice: 15000000000, // 15 gwei (in wei) (default: 100 gwei)
       // from: <address>,    // Account to send txs from (default: accounts[0])
       // websockets: true    // Enable EventEmitter interface for web3 (default: false)

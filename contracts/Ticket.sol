@@ -18,7 +18,6 @@ contract Ticket is Owned, ERC721Full {
 
     constructor(uint256 initialSupply, string memory tokenName, string memory tokenSymbol)
       ERC721Full(tokenName, tokenSymbol) public {
-        require(initialSupply <= 8000, "Max 8000 Tickets initially"); // TODO TDB
         _ownedTokensCount[owner].set(initialSupply);
         for (uint256 tokenId = 0; tokenId < initialSupply; tokenId++) {
             _tokenOwner[tokenId] = owner;
@@ -73,7 +72,6 @@ contract Ticket is Owned, ERC721Full {
      * @param amount Amount of tokens it will receive
      */
     function mintAmount(address target, uint256 amount) onlyOwner public {
-        require(amount <= 50, "Max 50 Tickets per tx"); // TODO TDB
         for (uint256 tokenId = 0; tokenId < 2**256-1 && amount > 0; tokenId++) {
             if (!_exists(tokenId)) {
                 _mint(target, tokenId);
